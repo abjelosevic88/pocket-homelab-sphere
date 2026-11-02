@@ -1,0 +1,6 @@
+# Pocket Sphere behind Caddy. Downloads are big and resumable: no buffering.
+sphere.example.com {
+	reverse_proxy pocket-sphere:8080 {
+		flush_interval -1
+	}
+}

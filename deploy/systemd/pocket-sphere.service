@@ -1,0 +1,24 @@
+[Unit]
+Description=Pocket Sphere — your retro game library
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=pocket-sphere
+Group=pocket-sphere
+ExecStart=/usr/local/bin/pocket-sphere
+Environment=DATA_DIR=/var/lib/pocket-sphere
+Environment=PORT=8080
+Environment=LIBRARY_DIR=/srv/videos
+Environment=BASE_URL=https://sphere.example.com
+Environment=SECURE_COOKIES=true
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/pocket-sphere
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
