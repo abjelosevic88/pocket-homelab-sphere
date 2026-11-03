@@ -177,6 +177,10 @@ func (s *Server) applyMatch(ctx context.Context, u *store.User, sc *store.Scene,
 	if err := s.store.UpdateScene(ctx, sc.ID, p); err != nil {
 		return err
 	}
+	// a wish for this scene came true
+	if n, _ := s.store.MarkWantedFound(ctx, m.Endpoint, m.ID, sc.ID); n > 0 {
+		s.log.Info("wishlist: found", "scene", sc.ID)
+	}
 	var perfs, tags []int64
 	if f.Performers {
 		for i := range m.Performers {

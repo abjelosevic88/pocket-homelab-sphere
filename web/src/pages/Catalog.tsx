@@ -9,6 +9,7 @@ import { Picker, SceneGrid, Stars, usePaged } from '../components/scene'
 import { announceChange, useCrumb, useOnChange } from '../components/Layout'
 import { Confirm, Empty, Field, Loading, MenuButton, Modal, errMsg, useAsync, useDebounce, useToast, type MenuItem } from '../components/ui'
 import { Icon } from '../components/icons'
+import { FollowButton, MissingScenes } from '../components/Discover'
 
 // ---------- studios ----------
 
@@ -66,6 +67,7 @@ export function StudioPage() {
         <div className="entity-logo">{s.image ? <img src={s.image} alt="" /> : <Icon name="building" size={32} />}</div>
         <div className="grow stack">
           <div className="row wrap"><div className="grow"><h1>{s.name}</h1><p className="muted">{s.scenes} scenes{s.parent && <> · part of <Link to={`/studios/${s.parent.id}`}>{s.parent.name}</Link></>}</p></div>
+            <FollowButton kind="studio" id={s.id} />
             <button type="button" className={`btn icon-only ghost ${s.favorite ? 'fav-on' : ''}`} onClick={() => mark({ favorite: !s.favorite })} aria-label="Favourite"><Icon name="heart" size={18} /></button>
             <MenuButton label="More" items={menu} align="right"><Icon name="more" size={17} /></MenuButton></div>
           <Stars value={s.rating} onChange={v => mark({ rating: v })} size={18} />
@@ -77,6 +79,7 @@ export function StudioPage() {
       <div className="sec-head"><h2 className="sec-h"><Icon name="film" size={16} />Scenes</h2><Link to={`/scenes?studios=${s.id}`} className="small">Open as a list</Link></div>
       <SceneGrid items={scenes.items} queue={`studios=${s.id}&sort=date`} />
       {scenes.more && <div className="load-more"><button type="button" className="btn" onClick={scenes.next}>Show more</button></div>}
+      <MissingScenes kind="studio" id={s.id} name={s.name} />
       {edit && <StudioEditor s={s} onClose={() => setEdit(false)} onSaved={x => { setEdit(false); setS(x); announceChange() }} />}
       {del && <Confirm title={`Delete ${s.name}?`} confirmLabel="Delete" message="The scenes stay; they just lose this studio." onCancel={() => setDel(false)} onConfirm={async () => { await api.del(`${V1}/studios/${s.id}`); announceChange(); navigate('/studios') }} />}
     </div>

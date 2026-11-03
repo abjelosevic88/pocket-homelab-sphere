@@ -11,6 +11,7 @@ import { announceChange, useCrumb, useOnChange } from '../components/Layout'
 import { Select } from '../components/Select'
 import { Confirm, Empty, Field, Loading, MenuButton, Modal, Segmented, errMsg, useDebounce, useToast, type MenuItem } from '../components/ui'
 import { Icon } from '../components/icons'
+import { FollowButton, MissingScenes } from '../components/Discover'
 
 const PSORTS = [{ value: 'name', label: 'Name' }, { value: 'scenes', label: 'Most scenes' }, { value: 'rating', label: 'Your rating' }, { value: 'o', label: 'O count' }, { value: 'age', label: 'Age' }, { value: 'added', label: 'Added' }, { value: 'random', label: 'Random' }]
 
@@ -18,6 +19,7 @@ export default function Performers() {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const { settings } = useApp()
+  const { toast } = useToast()
   const [q, setQ] = useState(params.get('q') || '')
   const dq = useDebounce(q, 250)
   const sort = params.get('sort') || 'name'
@@ -33,7 +35,7 @@ export default function Performers() {
       <div className="page-head">
         <div><h1>Performers</h1><p className="muted tnum">{total.toLocaleString()} {total === 1 ? 'person' : 'people'}</p></div>
         <div className="row wrap">
-          <button type="button" className="btn" onClick={async () => { const r = await api.post<{ changed: number }>(`${V1}/library/autotag`, { performers: true }); announceChange(); reload(); alert(`${r.changed} scenes got performers from their file names.`) }} title="Find each performer's name (or alias) in file names"><Icon name="wand" size={15} />Find in file names</button>
+          <button type="button" className="btn" onClick={async () => { const r = await api.post<{ changed: number }>(`${V1}/library/autotag`, { performers: true }); announceChange(); reload(); toast(`${r.changed} scenes got performers from their file names`) }} title="Find each performer's name (or alias) in file names"><Icon name="wand" size={15} />Find in file names</button>
           <button type="button" className="btn primary" onClick={() => setCreating(true)}><Icon name="plus" size={15} />New performer</button>
         </div>
       </div>
@@ -89,6 +91,7 @@ export function PerformerPage() {
           <div className="row wrap" style={{ alignItems: 'flex-start' }}>
             <div className="grow"><h1>{p.name}{p.disambiguation && <span className="muted"> ({p.disambiguation})</span>}</h1>
               <p className="muted">{p.scenes} scenes{p.galleries ? ` · ${p.galleries} galleries` : ''}{p.o_count ? ` · ${p.o_count} O's` : ''}</p></div>
+            <FollowButton kind="performer" id={p.id} />
             <button type="button" className={`btn icon-only ghost ${p.favorite ? 'fav-on' : ''}`} onClick={() => mark({ favorite: !p.favorite })} aria-label="Favourite" title="Favourite"><Icon name="heart" size={18} /></button>
             <MenuButton label="More" items={menu} align="right" width={260}><Icon name="more" size={17} /></MenuButton>
           </div>
@@ -102,6 +105,7 @@ export function PerformerPage() {
       {!scenes.loading && !scenes.items.length && <p className="muted">No scenes yet.</p>}
       <SceneGrid items={scenes.items} queue={`performers=${p.id}&sort=date`} />
       {scenes.more && <div className="load-more"><button type="button" className="btn" onClick={scenes.next}>Show more</button></div>}
+      <MissingScenes kind="performer" id={p.id} name={p.name} />
       {edit && <PerformerEditor p={p} onClose={() => setEdit(false)} onSaved={x => { setEdit(false); setP(x); announceChange() }} />}
       {lookup && <PerformerLookup p={p} onClose={() => setLookup(false)} onApplied={x => { setLookup(false); setP(x) }} />}
       {merge && <MergeModal target={p} onClose={() => setMerge(false)} onDone={x => { setMerge(false); setP(x); scenes.reload(); announceChange() }} />}

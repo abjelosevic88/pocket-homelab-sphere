@@ -23,6 +23,7 @@ export function Sidebar({ onNavigate, dash, filters }: { onNavigate: () => void;
     { to: '/scenes?progress=1', label: 'Continue watching', icon: 'play', active: only('progress', '1'), count: dash?.in_progress },
     { to: '/scenes?favorite=1', label: 'Favourites', icon: 'heart', active: only('favorite', '1'), count: dash?.favorites },
     { to: '/scenes?unwatched=1', label: 'Not watched yet', icon: 'eye-off', active: only('unwatched', '1'), count: dash?.unwatched },
+    { to: '/discover', label: 'Discover', icon: 'sparkles', active: loc.pathname === '/discover', count: dash?.discover },
     { to: '/downloads', label: 'Downloads', icon: 'download', active: loc.pathname === '/downloads', count: dash?.downloads },
   ]
   const browse: { to: string; label: string; icon: string; count?: number }[] = [

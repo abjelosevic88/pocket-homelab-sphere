@@ -19,6 +19,7 @@ import Galleries, { GalleryPage } from './pages/Galleries'
 import Markers from './pages/Markers'
 import Downloads from './pages/Downloads'
 import Stats, { Duplicates } from './pages/Stats'
+import Discover from './pages/Discover'
 import Settings from './pages/Settings'
 
 function Gate({ children }: { children: React.ReactNode }) {
@@ -53,6 +54,7 @@ function App() {
         <Route path="/markers" element={<Markers />} />
         <Route path="/downloads" element={<Downloads />} />
         <Route path="/stats" element={<Stats />} />
+        <Route path="/discover" element={<Discover />} />
         <Route path="/duplicates" element={<Duplicates />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

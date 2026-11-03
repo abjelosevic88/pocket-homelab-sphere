@@ -589,3 +589,108 @@ func Fetch(ctx context.Context, u, ua string) ([]byte, error) {
 	}
 	return io.ReadAll(io.LimitReader(resp.Body, 20<<20))
 }
+
+// ---------- whole lists (finding what you do not have) ----------
+
+// ScenePage is one page of a performer's or studio's scenes, newest first.
+type ScenePage struct {
+	Scenes []Scene `json:"scenes"`
+	Total  int     `json:"total"`
+}
+
+// ScenesOf lists a performer's or studio's scenes (kind performer | studio).
+func (b *StashBox) ScenesOf(ctx context.Context, kind, id string, page, per int) (*ScenePage, error) {
+	in := map[string]any{"page": max(page, 1), "per_page": per, "sort": "DATE", "direction": "DESC"}
+	crit := map[string]any{"value": []string{id}, "modifier": "INCLUDES"}
+	if kind == "studio" {
+		in["studios"] = crit
+	} else {
+		in["performers"] = crit
+	}
+	var out struct {
+		Res struct {
+			Count  int       `json:"count"`
+			Scenes []sbScene `json:"scenes"`
+		} `json:"queryScenes"`
+	}
+	if err := b.query(ctx, sceneFields+` query($in: SceneQueryInput!) { queryScenes(input: $in) { count scenes { ...S } } }`, map[string]any{"in": in}, &out); err != nil {
+		return nil, err
+	}
+	p := &ScenePage{Total: out.Res.Count, Scenes: []Scene{}}
+	for _, s := range out.Res.Scenes {
+		p.Scenes = append(p.Scenes, s.toScene(b.Endpoint))
+	}
+	return p, nil
+}
+
+// FindStudio finds a studio by its exact name.
+func (b *StashBox) FindStudio(ctx context.Context, name string) (*Studio, error) {
+	var out struct {
+		Res *struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"findStudio"`
+	}
+	if err := b.query(ctx, `query($n: String) { findStudio(name: $n) { id name } }`, map[string]any{"n": name}, &out); err != nil {
+		return nil, err
+	}
+	if out.Res == nil {
+		return nil, nil
+	}
+	return &Studio{ID: out.Res.ID, Name: out.Res.Name}, nil
+}
+
+// ScenesOf lists a performer's or studio's scenes on TPDB (id = its UUID).
+func (t *TPDB) ScenesOf(ctx context.Context, kind, id string, page, per int) (*ScenePage, error) {
+	var out struct {
+		Data []tpScene `json:"data"`
+		Meta struct {
+			Total int `json:"total"`
+		} `json:"meta"`
+	}
+	q := url.Values{"page": {fmt.Sprint(max(page, 1))}, "limit": {fmt.Sprint(per)}, "sort": {"date"}, "sort_order": {"desc"}}
+	path := "/performers/" + url.PathEscape(id) + "/scenes"
+	if kind == "studio" {
+		// scenes filter on the site's number, not its UUID
+		var site struct {
+			Data struct {
+				ID json.Number `json:"id"`
+			} `json:"data"`
+		}
+		if err := t.get(ctx, "/sites/"+url.PathEscape(id), url.Values{}, &site); err != nil {
+			return nil, err
+		}
+		if site.Data.ID == "" {
+			return nil, errors.New("TPDB does not know this studio any more")
+		}
+		path = "/scenes"
+		q.Set("site_id", site.Data.ID.String())
+	}
+	if err := t.get(ctx, path, q, &out); err != nil {
+		return nil, err
+	}
+	p := &ScenePage{Total: out.Meta.Total, Scenes: []Scene{}}
+	for _, s := range out.Data {
+		p.Scenes = append(p.Scenes, s.toScene())
+	}
+	return p, nil
+}
+
+// SearchSite finds studios (TPDB calls them sites) by name.
+func (t *TPDB) SearchSite(ctx context.Context, name string) ([]Studio, error) {
+	var out struct {
+		Data []struct {
+			UUID string      `json:"uuid"`
+			ID   json.Number `json:"id"`
+			Name string      `json:"name"`
+		} `json:"data"`
+	}
+	if err := t.get(ctx, "/sites", url.Values{"q": {name}, "per_page": {"10"}}, &out); err != nil {
+		return nil, err
+	}
+	res := []Studio{}
+	for _, s := range out.Data {
+		res = append(res, Studio{ID: s.UUID, Name: s.Name})
+	}
+	return res, nil
+}

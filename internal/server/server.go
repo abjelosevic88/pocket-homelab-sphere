@@ -138,6 +138,7 @@ func (s *Server) Bootstrap(ctx context.Context) error {
 	}
 	go s.downloader(ctx)
 	go s.subscriptions(ctx)
+	go s.followChecker(ctx)
 	go s.janitor(ctx)
 	if s.core.Configured() {
 		go s.coreLoop(ctx)

@@ -159,6 +159,12 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusBadRequest, "the stash-box address starts with https://")
 			return
 		}
+		if v != "" && me.Role != "admin" {
+			if err := s.publicURL(r.Context(), me, v); err != nil {
+				writeErr(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
 		cur.StashBoxURL = v
 	}
 	text("notify_url", &cur.NotifyURL, in.NotifyURL)

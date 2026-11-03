@@ -146,6 +146,7 @@ export default function Layout() {
     { id: 'markers', label: 'Markers', icon: 'marker', hint: 'M', keywords: 'moments positions', run: () => navigate('/markers') },
     { id: 'groups', label: 'Groups', icon: 'layers', keywords: 'movies series', run: () => navigate('/groups') },
     { id: 'galleries', label: 'Galleries', icon: 'image', keywords: 'pictures photos images', run: () => navigate('/galleries') },
+    { id: 'discover', label: 'Discover: new scenes, wishlist, following', icon: 'sparkles', keywords: 'missing wanted follow tpdb stashdb', run: () => navigate('/discover') },
     { id: 'downloads', label: 'Downloads', icon: 'download', hint: 'D', keywords: 'link youtube yt-dlp metube', run: () => navigate('/downloads') },
     { id: 'stats', label: 'Numbers', icon: 'chart', keywords: 'stats history', run: () => navigate('/stats') },
     { id: 'duplicates', label: 'Duplicates', icon: 'copy', keywords: 'same phash', run: () => navigate('/duplicates') },
@@ -183,7 +184,7 @@ export default function Layout() {
 const SECTION: Record<string, [string, string]> = {
   '': ['Home', '/'], scenes: ['Scenes', '/scenes'], performers: ['Performers', '/performers'], studios: ['Studios', '/studios'], tags: ['Tags', '/tags'],
   markers: ['Markers', '/markers'], groups: ['Groups', '/groups'], galleries: ['Galleries', '/galleries'], downloads: ['Downloads', '/downloads'],
-  stats: ['Numbers', '/stats'], duplicates: ['Duplicates', '/duplicates'],
+  stats: ['Numbers', '/stats'], discover: ['Discover', '/discover'], duplicates: ['Duplicates', '/duplicates'],
 }
 
 function TopBar({ onMenu, onPalette, mobile, compact, sidebarOpen, crumb }: { onMenu: () => void; onPalette: () => void; mobile: boolean; compact: boolean; sidebarOpen: boolean; crumb: string }) {

@@ -30,6 +30,15 @@ Everything personal (ratings, favourites, O's, plays, saved views, downloads, fo
 
 `/performers` (`/lookup?q=`, `/{id}/apply`, `/{id}/merge`, `/{id}/image`), `/studios`, `/tags` (`/{id}/merge`), `/groups`, `/markers` (`?tag=`), `/scenes/{id}/markers`, `/galleries`, `/images/{id}`, `/filters`, `/history`, `/stats?days=`, `/dashboard`, `/home`, `/folders`, `/duplicates?distance=`, `/library` (status), `POST /library/scan`, `POST /library/autotag`, `POST /library/regenerate`.
 
+## Discover
+
+| | |
+|---|---|
+| `GET /performers/{id}/discover?source=stashdb\|tpdb&page=` (and `/studios/{id}/discover`) | Their scenes on the lookup site, newest first, each with `have_id` (already in the library) and `wanted_id` |
+| `GET` / `POST /wanted` · `DELETE /wanted/{id}` | Your wishlist (`{"scene": …}` from a discover list); found ones get `found_scene_id` when a file is identified as them |
+| `GET` / `POST /follows` (`{"kind": "performer\|studio", "item_id": 1}`) · `DELETE /follows/{id}` · `POST /follows/{id}/check` | Following; checked about once a day, the first check only remembers what exists |
+| `GET /releases` · `POST /releases/{id}/dismiss` · `POST /releases/dismiss` | New scenes found by following |
+
 ## Downloads
 
 | | |

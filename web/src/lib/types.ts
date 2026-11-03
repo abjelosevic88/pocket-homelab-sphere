@@ -110,7 +110,7 @@ export interface LookupScene {
 
 export interface Dashboard {
   scenes: number; vr: number; favorites: number; unwatched: number; in_progress: number; performers: number; studios: number; tags: number
-  groups: number; galleries: number; markers: number; missing: number; trash: number; downloads: number; bytes: number; seconds: number
+  groups: number; galleries: number; markers: number; missing: number; trash: number; downloads: number; discover: number; bytes: number; seconds: number
 }
 
 export interface Home { continue: Scene[]; recent: Scene[]; vr: Scene[]; favorites: Scene[]; unwatched: Scene[]; top_rated: Scene[]; performers: Performer[] }
@@ -142,3 +142,8 @@ export interface Settings {
 }
 export interface AIStatus { ready: boolean; provider: string; detail: string }
 export interface Headset { enabled: boolean; available: boolean; base?: string; deovr?: string; heresphere?: string }
+
+export interface DiscoverItem { scene: LookupScene; have_id: number; wanted_id: number; release_id?: number }
+export interface DiscoverPage { problem?: string; source?: string; sources: string[]; remote_id?: string; total?: number; page?: number; per?: number; items: DiscoverItem[] }
+export interface Follow { id: number; kind: 'performer' | 'studio'; item_id: number; name: string; image: string; last_checked_at: string; last_error: string; created_at: string; new: number }
+export interface WantedItem { id: number; endpoint: string; remote_id: string; title: string; release_date: string; scene: LookupScene; found_scene_id: number | null; found_at: string; created_at: string; have_id: number }

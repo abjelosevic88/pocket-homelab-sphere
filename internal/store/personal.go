@@ -297,6 +297,7 @@ type Dashboard struct {
 	Missing    int   `json:"missing"`
 	Trash      int   `json:"trash"`
 	Downloads  int   `json:"downloads"` // running or waiting
+	Discover   int   `json:"discover"`  // new scenes from follows
 	Bytes      int64 `json:"bytes"`
 	Seconds    int64 `json:"seconds"`
 }
@@ -329,6 +330,7 @@ func (s *Store) GetDashboard(ctx context.Context, uid int64) (*Dashboard, error)
 		_ = s.DB.QueryRowContext(ctx, q).Scan(dst)
 	}
 	_ = s.DB.QueryRowContext(ctx, `SELECT COUNT(1) FROM downloads WHERE user_id = ? AND kind = 'video' AND status IN ('queued','downloading','processing')`, uid).Scan(&d.Downloads)
+	d.Discover = s.NewReleaseCount(ctx, uid)
 	return d, nil
 }
 
