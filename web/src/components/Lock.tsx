@@ -1,5 +1,5 @@
 // The app lock: a PIN asked when the app opens and after a while away. It
-// keeps the screen private on a shared device; the account itself is
+// keeps the screen to yourself on a shared device; the account itself is
 // protected by signing in.
 import { useEffect, useRef, useState } from 'react'
 import { api, V1 } from '../lib/api'

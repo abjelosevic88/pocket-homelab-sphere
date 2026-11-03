@@ -22,7 +22,7 @@ Everything personal (ratings, favourites, O's, plays, saved views, downloads, fo
 | `GET /scenes/{id}/stream` | The file (Range requests); `?download=1` as an attachment |
 | `GET /scenes/{id}/stream.mp4?start=&q=` | A live MP4 (`q=original` repackages, `q=1080` converts) |
 | `GET /scenes/{id}/preview.mp4`, `/sprite.jpg`, `/sprite.json`, `/cover`, `/frame?at=` | Made pictures and clips |
-| `GET /scenes/{id}/identify?q=` → `POST /scenes/{id}/identify` | Look it up on StashDB / ThePornDB; apply `{"result": …, "fields": {…}}` |
+| `GET /scenes/{id}/identify?q=` → `POST /scenes/{id}/identify` | Look it up on StashDB / TPDB; apply `{"result": …, "fields": {…}}` |
 | `POST /scenes/bulk` | `{"ids": […], "add_tags", "remove_tags", "add_performers", "studio_id", "organized", "rating", "favorite", "hidden", "regenerate", "identify", "trash"}` |
 | `DELETE /scenes/{id}` · `POST /scenes/{id}/restore` · `DELETE /scenes/{id}/purge` | Trash, restore, delete for good (admin) |
 

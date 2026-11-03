@@ -411,7 +411,7 @@ type Settings struct {
 	OwnFolder       bool   `json:"own_folder"`       // one folder per video (with its picture), like the rest of the library
 	SiteTags        bool   `json:"site_tags"`        // take the site's tags
 	UploaderStudio  bool   `json:"uploader_studio"`  // the uploader / channel becomes the studio
-	AutoIdentify    bool   `json:"auto_identify"`    // look a new video up on StashDB / ThePornDB
+	AutoIdentify    bool   `json:"auto_identify"`    // look a new video up on StashDB / TPDB
 
 	// Looking scenes up.
 	StashDBKey  string `json:"stashdb_key"`

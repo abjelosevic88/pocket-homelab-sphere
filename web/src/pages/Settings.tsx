@@ -19,7 +19,7 @@ const TABS: { id: TabId; label: string; icon: string; sub: string }[] = [
   { id: 'general', label: 'General', icon: 'settings', sub: 'How lists look, privacy on a shared screen, date formats and the app title.' },
   { id: 'player', label: 'Player', icon: 'play', sub: 'Starting, resuming, the next scene, sound, VR and when a sitting counts as watched.' },
   { id: 'downloads', label: 'Downloads', icon: 'download', sub: 'Where videos from links go, in what quality, what is filled in — and cookies for sites that need a sign-in.' },
-  { id: 'lookups', label: 'Lookups', icon: 'search', sub: 'StashDB and ThePornDB find what a scene is from its fingerprint or name, with performers, studio, tags and cover.' },
+  { id: 'lookups', label: 'Lookups', icon: 'search', sub: 'StashDB and TPDB find what a scene is from its fingerprint or name, with performers, studio, tags and cover.' },
   { id: 'headset', label: 'Headset', icon: 'vr', sub: 'Watch on a Quest or another headset: in its browser, or in DeoVR or HereSphere.' },
   { id: 'library', label: 'Library', icon: 'folder', sub: 'The library folder, the pictures and previews made in the background, finding names in files — and bringing Stash over.' },
   { id: 'notifications', label: 'Notifications', icon: 'bell', sub: 'A push when a download finishes or fails.' },
@@ -269,7 +269,7 @@ function Lookups() {
         <SettingRow title="Another stash-box (optional)" help="e.g. https://fansdb.cc/graphql — empty = StashDB." stack><input value={f.stashbox_url} onChange={e => setF({ ...f, stashbox_url: e.target.value })} placeholder="https://stashdb.org/graphql" /></SettingRow>
         <div className="row"><button type="button" className="btn sm" onClick={() => run('stashdb', f.stashbox_url, f.stashdb_key)} disabled={!f.stashdb_key}>Test</button>{status('stashdb')}</div>
       </Section>
-      <Section title="ThePornDB" icon="search" sub={<>Finds scenes by file name and hash. Free key at <a href="https://theporndb.net" target="_blank" rel="noreferrer">theporndb.net</a> → profile → API tokens.</>}>
+      <Section title="TPDB" icon="search" sub="Finds scenes by file name and hash. Free key on its website → profile → API tokens.">
         <SettingRow title="API key" stack><input value={f.tpdb_key} onChange={e => setF({ ...f, tpdb_key: e.target.value })} autoComplete="off" /></SettingRow>
         <div className="row"><button type="button" className="btn sm" onClick={() => run('tpdb', '', f.tpdb_key)} disabled={!f.tpdb_key}>Test</button>{status('tpdb')}</div>
       </Section>
@@ -290,7 +290,7 @@ function HeadsetTab() {
   return (
     <div className="stack loose">
       <Section title="In the headset's browser" icon="globe" sub="Open this app in the Quest Browser (or any browser with WebXR), start a VR scene and press the headset button next to the VR button. Your sign-in, ratings and history work as on the computer." />
-      <Section title="DeoVR and HereSphere" icon="vr" sub="These players cannot sign in, so they get a private address with a secret in it. Anyone with the address sees your library — keep it to yourself, and make a new one if it leaks." actions={data.enabled && <span className="badge ok">on</span>}>
+      <Section title="DeoVR and HereSphere" icon="vr" sub="These players cannot sign in, so they get their own address with a secret in it. Anyone with the address sees your library — keep it to yourself, and make a new one if it leaks." actions={data.enabled && <span className="badge ok">on</span>}>
         {!data.available && <div className="callout warn"><Icon name="info" size={15} /><span>The admin turned the headset feeds off (HEADSET_APIS=false).</span></div>}
         {data.enabled ? <div className="stack">
           <Field label="DeoVR" help="In DeoVR: the browser tab → type this address."><CopyField value={data.deovr || ''} /></Field>
@@ -586,7 +586,7 @@ function About() {
         <img src="/favicon.svg" alt="" width={48} height={48} />
         <div>
           <h3>Pocket Sphere</h3>
-          <p className="muted small">Your private video library with a VR player: scenes, performers, studios, tags and markers, previews when you point at a scene, fingerprints that find what a file is, downloads from a link and DeoVR/HereSphere on the headset. One Go binary, one SQLite file, one volume.</p>
+          <p className="muted small">Your video library with a VR player: scenes, performers, studios, tags and markers, previews when you point at a scene, fingerprints that find what a file is, downloads from a link and DeoVR/HereSphere on the headset. One Go binary, one SQLite file, one volume.</p>
         </div>
       </div>
       <div className="set-stats">
@@ -603,7 +603,7 @@ function About() {
         <button type="button" className="btn" onClick={() => setKeys(true)}><Icon name="keyboard" size={15} />Keyboard shortcuts</button>
         <a className="btn" href="https://github.com/abjelosevic88/pocket-homelab-sphere" target="_blank" rel="noreferrer"><Icon name="external" size={15} />Project on GitHub</a>
       </div>
-      <p className="muted small">Open source (MIT). Part of the Pocket apps; on purpose it tells the others nothing about what you watch unless you switch a link on in Pocket Core. Downloads use <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noreferrer">yt-dlp</a>, pictures and conversions <a href="https://ffmpeg.org" target="_blank" rel="noreferrer">ffmpeg</a>; lookups use <a href="https://stashdb.org" target="_blank" rel="noreferrer">StashDB</a> and <a href="https://theporndb.net" target="_blank" rel="noreferrer">ThePornDB</a>.</p>
+      <p className="muted small">Open source (MIT). Part of the Pocket apps; it tells the others nothing about what you watch unless you switch a link on in Pocket Core. Downloads use <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noreferrer">yt-dlp</a>, pictures and conversions <a href="https://ffmpeg.org" target="_blank" rel="noreferrer">ffmpeg</a>; lookups use StashDB and TPDB with your own keys.</p>
       {keys && <ShortcutsSheet onClose={() => setKeys(false)} />}
     </div>
   )

@@ -1,4 +1,4 @@
-// Command pocket-sphere is a private video library with a VR player:
+// Command pocket-sphere is a video library with a VR player:
 // scenes, performers, studios, tags and markers, fingerprints and lookups,
 // hover previews, downloads from links and feeds for headset players.
 // One binary, one SQLite file.
@@ -41,7 +41,7 @@ func main() {
 			runResetPassword(os.Args[2:])
 			return
 		case "help", "--help", "-h":
-			fmt.Println(`pocket-sphere — your private video library with a VR player
+			fmt.Println(`pocket-sphere — your video library with a VR player
 
 Usage:
   pocket-sphere                     start the server (default)

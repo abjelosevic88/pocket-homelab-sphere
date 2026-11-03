@@ -20,10 +20,10 @@ import (
 
 // ---------- how a scene is shown ----------
 
-var reRelease = regexp.MustCompile(`(?i)[ ._-]+(xxx|(480|540|576|720|1080|1440|1920|2160|2700|2880|3072|3840|4096|5760|7680)p|4k|5k|6k|8k|hevc|x26[45]|h26[45]|web-?dl|mp4|wrb|ktr|gush|gush|vr180|vr360|oculus|quest[ ._]?\d?|lr|sbs|tb|3dh|180|360)\b.*$`)
+var reRelease = regexp.MustCompile(`(?i)[ ._-]+(x{3}|(480|540|576|720|1080|1440|1920|2160|2700|2880|3072|3840|4096|5760|7680)p|4k|5k|6k|8k|hevc|x26[45]|h26[45]|web-?dl|mp4|wrb|ktr|gush|gush|vr180|vr360|oculus|quest[ ._]?\d?|lr|sbs|tb|3dh|180|360)\b.*$`)
 var reBrackets = regexp.MustCompile(`\[[^\]]*\]`)
 
-// niceName is a scene's file name made readable ("BaDoinkVR.Lola.Myluv.On.Her.Knees…4K..mp4" → "BaDoinkVR Lola Myluv On Her Knees Begging").
+// niceName is a scene's file name made readable ("StudioVR.Jane.Doe.Morning.Light.Oculus.4K.mp4" → "StudioVR Jane Doe Morning Light").
 func niceName(p string) string {
 	base := path.Base(p)
 	base = strings.TrimSuffix(base, path.Ext(base))

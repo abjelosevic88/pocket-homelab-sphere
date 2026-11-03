@@ -1,4 +1,4 @@
-# Pocket Sphere — a private video library with a VR player (Go + SQLite):
+# Pocket Sphere — a video library with a VR player (Go + SQLite):
 # scenes, performers, studios, tags, markers, hover previews, fingerprints
 # and lookups, downloads from links (yt-dlp), DeoVR/HereSphere feeds.
 # One container, two volumes: the app's data and the video library.

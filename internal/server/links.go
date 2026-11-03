@@ -14,7 +14,7 @@ import (
 // Pocket Core app links (docs/links.md in pocket-homelab-core), Sphere as
 // the target: another Pocket app the person allowed in Core may act here for
 // them with a pcx_ token, only within these scopes. Every route not listed in
-// linkRoutes stays closed to it (403). Both start off; a private library is
+// linkRoutes stays closed to it (403). Both start off; the library is
 // opened to other apps only by the person, one by one.
 
 var linkOffers = []core.Offer{

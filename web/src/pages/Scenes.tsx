@@ -261,7 +261,7 @@ function BulkEdit({ ids, onClose, onDone }: { ids: number[]; onClose: () => void
           <Field label="Favourite (yours)"><Segmented size="sm" value={fav} onChange={setFav} options={[{ value: '', label: 'Keep' }, { value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} /></Field>
         </div>
         <Field label="Your rating"><div className="row"><Stars value={Math.max(rating, 0)} onChange={setRating} />{rating >= 0 && <button type="button" className="link-btn small" onClick={() => setRating(-1)}>keep as is</button>}</div></Field>
-        <label className="check-row"><input type="checkbox" checked={identify} onChange={e => setIdentify(e.target.checked)} />Look them up on StashDB / ThePornDB (fills the ones with exactly one match)</label>
+        <label className="check-row"><input type="checkbox" checked={identify} onChange={e => setIdentify(e.target.checked)} />Look them up on StashDB / TPDB (fills the ones with exactly one match)</label>
         <label className="check-row"><input type="checkbox" checked={regen} onChange={e => setRegen(e.target.checked)} />Make the pictures and previews again</label>
       </div>
     </Modal>

@@ -12,7 +12,7 @@ import (
 )
 
 // Identify: what a scene is, found on StashDB (or another stash-box) by the
-// file's fingerprints or by words, and on ThePornDB by its hash or name.
+// file's fingerprints or by words, and on TPDB by its hash or name.
 // Every person uses their own keys. Applying a match fills the scene and
 // creates the studio, performers (with their pictures) and tags it needs.
 
@@ -42,7 +42,7 @@ func (s *Server) candidates(ctx context.Context, uid int64, sc *store.Scene, que
 	out := []lookup.Scene{}
 	var problems []string
 	if sb == nil && tp == nil {
-		return out, []string{"Add a StashDB or ThePornDB key under Settings → Lookups to find scenes."}
+		return out, []string{"Add a StashDB or TPDB key under Settings → Lookups to find scenes."}
 	}
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
@@ -381,7 +381,7 @@ func (s *Server) handlePerformerLookup(w http.ResponseWriter, r *http.Request) {
 	out := []lookup.Performer{}
 	var problems []string
 	if sb == nil && tp == nil {
-		problems = append(problems, "Add a StashDB or ThePornDB key under Settings → Lookups to find performers.")
+		problems = append(problems, "Add a StashDB or TPDB key under Settings → Lookups to find performers.")
 	}
 	if sb != nil {
 		if res, err := sb.SearchPerformer(ctx, q); err == nil {
@@ -419,7 +419,7 @@ func (s *Server) handlePerformerApply(w http.ResponseWriter, r *http.Request) {
 	fillPerformer(p, &in.Result, in.Overwrite)
 	endpoint := lookup.StashDB
 	if in.Result.Source == "tpdb" {
-		endpoint = "https://theporndb.net"
+		endpoint = "tpdb"
 	} else if st, _ := s.store.GetSettings(ctx, userFrom(ctx).ID); st.StashBoxURL != "" {
 		endpoint = st.StashBoxURL
 	}

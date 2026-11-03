@@ -252,7 +252,7 @@ var eventTopics = []string{"sphere.download_finished"}
 func (s *Server) registerWithCore(ctx context.Context) error {
 	m := core.Manifest{
 		Slug: "sphere", Name: "Pocket Sphere",
-		Description: "Your private video library with a VR player: scenes, performers, studios, tags and markers, fingerprints that find what a file is, previews when you point at a scene, downloads from a link, and DeoVR/HereSphere on the headset.",
+		Description: "Your video library with a VR player: scenes, performers, studios, tags and markers, fingerprints that find what a file is, previews when you point at a scene, downloads from a link, and DeoVR/HereSphere on the headset.",
 		Icon:        "/favicon.svg", Version: Version,
 		URL: s.cfg.CoreAppURL, PublicURL: s.cfg.BaseURL, HealthPath: "/healthz", EnvPrefix: "SPHERE",
 		Publishes: eventTopics,

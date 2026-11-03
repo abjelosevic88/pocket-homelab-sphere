@@ -2,7 +2,7 @@
 
 <h1 align="center">Pocket Sphere</h1>
 
-<p align="center">Your private video library with a VR player: scenes, performers, studios, tags and markers, previews when you point at a scene, fingerprints that find what a file is, downloads from a link, and DeoVR / HereSphere on the headset. A Stash replacement. One Go binary, one SQLite file, one volume. Part of the Pocket apps; works on its own too.</p>
+<p align="center">Your video library with a VR player: scenes, performers, studios, tags and markers, previews when you point at a scene, fingerprints that find what a file is, downloads from a link, and DeoVR / HereSphere on the headset. A Stash replacement. One Go binary, one SQLite file, one volume. Part of the Pocket apps; works on its own too.</p>
 
 <p align="center">
   <a href="https://github.com/abjelosevic88/pocket-homelab-sphere/actions/workflows/ci.yml"><img src="https://github.com/abjelosevic88/pocket-homelab-sphere/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -38,13 +38,13 @@ The screenshots show the demo library: made-up names and abstract pictures.
 
 - **A VR player in the browser** — 180° and 360° videos, fisheye lenses (190°, MKX200, MKX220), side by side or top/bottom: drag to look around, scroll to zoom. In a headset's browser (Quest), one button puts you inside the video (WebXR). VR scenes are found from their names and frame shapes; you can set the shape by hand.
 - **Plays anything** — files the browser can play are sent as they are (instant seeking); the rest are repackaged or converted while you watch, on an Intel/AMD GPU when you have one.
-- **DeoVR and HereSphere** — each person gets a private address the headset players read. HereSphere writes ratings and favourites back and reports where you stopped.
+- **DeoVR and HereSphere** — each person gets their own address the headset players read. HereSphere writes ratings and favourites back and reports where you stopped.
 - **Scenes like Stash** — performers, studios (with networks), tags (with parents), groups (movies, series), markers, galleries of pictures, ratings with half stars, an O counter, favourites, play history, “continue watching”, saved views, a play queue from any list, bulk edits, duplicates found by picture.
 - **Pictures made for you** — covers, a scrubber with pictures and a strip under the player, short silent previews when you point at a scene, marker clips. VR videos get flat pictures, not the doubled fisheye frame.
-- **Find out what a file is** — the same fingerprints as Stash (oshash, phash) look scenes up on StashDB or another stash-box, and ThePornDB by hash or name: title, date, studio, performers with photos, tags, cover in one click — or by themselves for new files.
+- **Find out what a file is** — the same fingerprints as Stash (oshash, phash) look scenes up on StashDB or another stash-box, and TPDB by hash or name: title, date, studio, performers with photos, tags, cover in one click — or by themselves for new files.
 - **Downloads from a link, like MeTube** — paste a video, playlist or channel link (or press ⌘V anywhere), pick quality, format and folder; clips, name prefix, items limit, passwords and your own cookies.txt for sites that need a sign-in. Follow channels to fetch new videos as they come. Title, date, description, uploader and tags come along; yt-dlp is kept up to date by itself.
 - **Bring Stash over** — upload Stash's database: titles, performers, studios, tags, groups, markers, StashDB ids, and your ratings, O's, play history and resume points, matched by fingerprint.
-- **Private** — per person: ratings, history, downloads and settings are yours; admins don't see them. Blur pictures until pointed at, an escape page on Esc Esc, a PIN lock, notifications without titles. Other Pocket apps see nothing unless you switch a link on.
+- **Yours** — per person: ratings, history, downloads and settings are yours; admins don't see them. Blur pictures until pointed at, an escape page on Esc Esc, a PIN lock, notifications without titles. Other Pocket apps see nothing unless you switch a link on.
 
 ## Run it
 
@@ -75,7 +75,7 @@ Go 1.26, SQLite (pure Go), React 19 + Vite, plain WebGL for the VR view. The scr
 
 ## Credits
 
-[ffmpeg](https://ffmpeg.org) makes pictures, previews and conversions; [yt-dlp](https://github.com/yt-dlp/yt-dlp) downloads (both run as programs, not linked). Fingerprints match [Stash](https://github.com/stashapp/stash)'s, with [goimagehash](https://github.com/corona10/goimagehash). Lookups: [StashDB](https://stashdb.org) and [ThePornDB](https://theporndb.net) with your own keys.
+[ffmpeg](https://ffmpeg.org) makes pictures, previews and conversions; [yt-dlp](https://github.com/yt-dlp/yt-dlp) downloads (both run as programs, not linked). Fingerprints match [Stash](https://github.com/stashapp/stash)'s, with [goimagehash](https://github.com/corona10/goimagehash). Lookups: StashDB and TPDB with your own keys.
 
 ## License
 

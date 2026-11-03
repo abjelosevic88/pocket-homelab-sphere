@@ -33,4 +33,4 @@ location / {
 
 ## Headset players
 
-DeoVR and HereSphere cannot sign in; each person makes a private address under Settings → Headset (`https://sphere.example.com/vr/<secret>/deovr` and `/heresphere`). Anyone with the address sees that person's library, so keep it on a private network (or behind your VPN) and make a new one if it leaks.
+DeoVR and HereSphere cannot sign in; each person makes their own address under Settings → Headset (`https://sphere.example.com/vr/<secret>/deovr` and `/heresphere`). Anyone with the address sees that person's library, so keep it on your own network (or behind your VPN) and make a new one if it leaks.

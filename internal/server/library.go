@@ -249,7 +249,7 @@ func (s *Server) scanAll(ctx context.Context, addedBy map[string]int64) error {
 		}
 		newIDs = append(newIDs, id)
 		st.Added++
-		// the name alone often says it is VR ("…VR180…", "BaDoinkVR…"); the
+		// the name alone often says it is VR ("…VR180…", "…Oculus…"); the
 		// frame size refines it once the file has been read
 		if sh := media.DetectShape(f.rel, 0, 0, "", ""); sh.IsVR() {
 			_ = s.store.SetVR(ctx, id, sh.Projection, sh.Stereo, sh.FOV)

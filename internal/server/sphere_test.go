@@ -44,7 +44,7 @@ func newHarness(t *testing.T) *harness {
 	ac, _ := st.CreateSession(ctx, alice.ID, time3h)
 	bc, _ := st.CreateSession(ctx, bob.ID, time3h)
 	// a library with two videos and a gallery
-	for _, f := range []string{"Studio One/First Scene.mp4", "VR/BaDoinkVR.Some.Scene.Oculus.4K.mp4"} {
+	for _, f := range []string{"Studio One/First Scene.mp4", "VR/StudioVR.Some.Scene.Oculus.4K.mp4"} {
 		p := filepath.Join(cfg.LibraryDir, f)
 		_ = os.MkdirAll(filepath.Dir(p), 0o755)
 		if err := sparseFile(p, 5<<20); err != nil {
@@ -285,10 +285,10 @@ func TestLinkScopes(t *testing.T) {
 
 func TestNiceName(t *testing.T) {
 	cases := map[string]string{
-		"x/BaDoinkVR.Lola.Myluv.On.Her.Knees.Begging.Oculus,.Quest.2..4K..mp4":                   "BaDoinkVR Lola Myluv On Her Knees Begging",
-		"x/HollyRandall.20.10.15.Lola.Myluv.Movie.Night.XXX.1080p.MP4-WRB.mp4":                   "HollyRandall 20 10 15 Lola Myluv Movie Night",
-		"Babes - Lola Myluv - Luvly.mp4":                                                         "Babes - Lola Myluv - Luvly",
-		"[letsdoeit.com] - 2020.08.07 - Lola Myluv - Horny couple has passionate sex(1080p).mp4": "2020.08.07 - Lola Myluv - Horny couple has passionate sex(1080p)",
+		"x/StudioVR.Jane.Doe.Morning.Light.Oculus,.Quest.2..4K..mp4":          "StudioVR Jane Doe Morning Light",
+		"x/Studio.20.10.15.Jane.Doe.Movie.Night.XXX.1080p.MP4-GRP.mp4":        "Studio 20 10 15 Jane Doe Movie Night",
+		"Studio - Jane Doe - Sunday.mp4":                                      "Studio - Jane Doe - Sunday",
+		"[studio.com] - 2020.08.07 - Jane Doe - A day at the lake(1080p).mp4": "2020.08.07 - Jane Doe - A day at the lake(1080p)",
 	}
 	for in, want := range cases {
 		if got := niceName(in); got != want {

@@ -52,7 +52,7 @@ CREATE TABLE studios (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   name        TEXT NOT NULL UNIQUE COLLATE NOCASE,
   parent_id   INTEGER REFERENCES studios(id) ON DELETE SET NULL,
-  aliases     TEXT NOT NULL DEFAULT '',          -- "Badoink VR, BadoinkVR"
+  aliases     TEXT NOT NULL DEFAULT '',          -- "Studio VR, StudioVR"
   url         TEXT NOT NULL DEFAULT '',
   details     TEXT NOT NULL DEFAULT '',
   image_path  TEXT NOT NULL DEFAULT '',          -- FILES_DIR relative

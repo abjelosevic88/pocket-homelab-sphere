@@ -75,7 +75,7 @@ export function PerformerPage() {
   ] as [string, string][]).filter(([, v]) => v)
   const menu = (): MenuItem[] => [
     { label: 'Edit', icon: 'edit', onSelect: () => setEdit(true) },
-    { label: 'Look up on StashDB / ThePornDB', icon: 'search', onSelect: () => setLookup(true) },
+    { label: 'Look up on StashDB / TPDB', icon: 'search', onSelect: () => setLookup(true) },
     { label: 'Merge others into this one', icon: 'users', onSelect: () => setMerge(true) },
     { label: 'Find in file names', icon: 'wand', onSelect: async () => { const r = await api.post<{ changed: number }>(`${V1}/library/autotag`, { performers: true }); toast(`${r.changed} scenes changed`); scenes.reload(); load() } },
     'sep',
@@ -176,7 +176,7 @@ function PerformerLookup({ p, onClose, onApplied }: { p: Performer; onClose: () 
                 <span className="lookup-title">{r.name}{r.disambiguation && <span className="muted"> ({r.disambiguation})</span>}</span>
                 <span className="muted small">{[genderLabel(r.gender), r.birthdate, r.country].filter(Boolean).join(' · ')}</span>
                 {r.aliases && r.aliases.length > 0 && <span className="small ellipsis">aka {r.aliases.join(', ')}</span>}
-                <span><span className="badge sm">{r.source === 'stashdb' ? 'StashDB' : 'ThePornDB'}</span></span>
+                <span><span className="badge sm">{r.source === 'stashdb' ? 'StashDB' : 'TPDB'}</span></span>
               </span>
             </button>
           ))}

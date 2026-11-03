@@ -606,7 +606,7 @@ func (s *Server) handleSetGroupImage(w http.ResponseWriter, r *http.Request) {
 // ---------- auto-tag from file names ----------
 
 // handleAutoTag puts performers, studios and tags on scenes whose file path
-// mentions them by name or alias ("Lola.Myluv" finds Lola Myluv).
+// mentions them by name or alias ("Jane.Doe" finds Jane Doe).
 func (s *Server) handleAutoTag(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var in struct {

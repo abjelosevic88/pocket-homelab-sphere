@@ -5,7 +5,7 @@ Pocket Sphere keeps three kinds of things apart:
 - **`DATA_DIR`** (`/data` in the container) — the app's own data:
   - `pocket-sphere.db` (+ `-wal` / `-shm` while running) — the catalogue (scenes, performers, studios, tags, groups, markers, galleries), everyone's ratings, favourites, O's, play history, saved views, downloads and followed channels, settings, users
   - `files/covers/`, `files/performers/`, `files/studios/`, `files/tags/`, `files/groups/` — covers, photos and logos (back these up: some came from lookups or uploads)
-  - `cookies/` — each person's cookies.txt for downloads (private)
+  - `cookies/` — each person's cookies.txt for downloads (personal)
   - `bin/yt-dlp` — the app's own yt-dlp (fetched again when missing)
   - `backups/` — where the CLI writes snapshots
 - **`GENERATED_DIR`** (`DATA_DIR/generated` by default) — scrubber pictures, hover previews, marker clips, gallery thumbnails. Everything here is made again from the videos; **leave it out of backups**.

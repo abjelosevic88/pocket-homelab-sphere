@@ -5,15 +5,11 @@ import (
 	"strings"
 )
 
-// VR studios and words in file names ("BaDoinkVR", "CzechVRCasting",
-// "Oculus", "VR180"), compared with the name squashed to lower-case letters
-// and digits.
+// Words in file names that mean VR ("VR180", "Oculus", "Quest2"), compared
+// with the name squashed to lower-case letters and digits. Studio names
+// ending or starting with "vr" are found by the token rule below.
 var vrWords = []string{
-	"vr180", "vr360", "oculus", "gearvr", "psvr", "quest2", "quest3", "virtualrealporn", "virtualreal", "sexlikereal", "virtualtaboo",
-	"badoinkvr", "czechvr", "wankzvr", "vrbangers", "darkroomvr", "vrhush", "povr", "milfvr", "realjamvr", "vrconk", "stasyqvr",
-	"vrcosplayx", "18vr", "vrlatina", "naughtyamericavr", "vrporn", "lethalhardcorevr", "kinkvr", "tmwvrnet", "vrallure", "vrspy",
-	"swallowbay", "vrsolos", "babevr", "vrintimacy", "only3x", "holivr", "dezyred", "realitylovers", "virtualpee", "vredging",
-	"perfectgirlfriend", "pornbcn", "vrfirsttimer", "vrmansion", "squeezevr", "baberoticavr", "tadpolexxx", "vrxdb",
+	"vr180", "vr360", "oculus", "gearvr", "psvr", "quest2", "quest3", "virtualreal", "realitylovers", "holivr", "dezyred",
 }
 
 var tokenRe = regexp.MustCompile(`[a-z0-9]+`)

@@ -149,7 +149,7 @@ function Details({ sc }: { sc: Scene }) {
         {Object.keys(sc.stash_ids).length > 0 && <><dt>Matched on</dt><dd>{Object.keys(sc.stash_ids).map(k => k.replace(/^https?:\/\//, '').replace(/\/graphql$/, '')).join(', ')}</dd></>}
         <dt>Organized</dt><dd>{sc.organized ? 'Yes' : 'No'}</dd>
       </dl>
-      {!sc.performers.length && !sc.tags.length && !sc.details && <p className="muted small">Nothing filled in yet — use <b>Look up</b> to find it on StashDB / ThePornDB, or <b>Edit</b>.</p>}
+      {!sc.performers.length && !sc.tags.length && !sc.details && <p className="muted small">Nothing filled in yet — use <b>Look up</b> to find it on StashDB / TPDB, or <b>Edit</b>.</p>}
     </div>
   )
 }
@@ -361,7 +361,7 @@ function Identify({ sc, onApplied }: { sc: Scene; onApplied: (d: SceneDetail) =>
               <span className="lookup-title">{r.title || 'Untitled'}</span>
               <span className="muted small">{[r.studio?.name, r.date, r.duration ? clock(r.duration) : ''].filter(Boolean).join(' · ')}</span>
               <span className="small ellipsis">{r.performers.map(p => p.name).join(', ')}</span>
-              <span className="row" style={{ gap: 4 }}><span className="badge sm">{r.source === 'stashdb' ? 'StashDB' : 'ThePornDB'}</span>{r.matched && <span className="badge sm accent">{r.matched === 'OSHASH' ? 'exact file' : 'looks the same'}</span>}</span>
+              <span className="row" style={{ gap: 4 }}><span className="badge sm">{r.source === 'stashdb' ? 'StashDB' : 'TPDB'}</span>{r.matched && <span className="badge sm accent">{r.matched === 'OSHASH' ? 'exact file' : 'looks the same'}</span>}</span>
             </span>
           </button>
         ))}

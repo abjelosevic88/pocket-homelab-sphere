@@ -40,7 +40,7 @@ USER app
 WORKDIR /data
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -fsS http://localhost:8080/healthz || exit 1
 LABEL org.opencontainers.image.title="Pocket Sphere" \
-      org.opencontainers.image.description="Private video library with a VR player: scenes, performers, studios, tags, markers, previews, fingerprints and lookups, downloads from links, DeoVR/HereSphere feeds." \
+      org.opencontainers.image.description="Video library with a VR player: scenes, performers, studios, tags, markers, previews, fingerprints and lookups, downloads from links, DeoVR/HereSphere feeds." \
       org.opencontainers.image.source="https://github.com/abjelosevic88/pocket-homelab-sphere" \
       org.opencontainers.image.licenses="MIT"
 ENTRYPOINT ["pocket-sphere"]

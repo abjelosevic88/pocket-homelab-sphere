@@ -1,5 +1,5 @@
 // Package lookup finds what a scene is on StashDB (or another stash-box)
-// and ThePornDB: by the file's fingerprints, or by searching its name.
+// and TPDB: by the file's fingerprints, or by searching its name.
 package lookup
 
 import (
@@ -354,9 +354,9 @@ query($t: String!) { searchPerformer(term: $t) { ...P } }`, map[string]any{"t": 
 	return res, nil
 }
 
-// ---------- ThePornDB ----------
+// ---------- TPDB ----------
 
-// TPDB talks to api.theporndb.net.
+// TPDB talks to the TPDB API.
 type TPDB struct {
 	Key string
 	UA  string
@@ -408,7 +408,7 @@ type tpScene struct {
 
 func (t *TPDB) get(ctx context.Context, path string, q url.Values, out any) error {
 	if t.Key == "" {
-		return errors.New("no ThePornDB key — add yours under Settings → Lookups")
+		return errors.New("no TPDB key — add yours under Settings → Lookups")
 	}
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.theporndb.net"+path+"?"+q.Encode(), nil)
 	req.Header.Set("Authorization", "Bearer "+t.Key)
@@ -420,13 +420,13 @@ func (t *TPDB) get(ctx context.Context, path string, q url.Values, out any) erro
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return errors.New("ThePornDB did not accept the key")
+		return errors.New("TPDB did not accept the key")
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		return nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("ThePornDB answered HTTP %d", resp.StatusCode)
+		return fmt.Errorf("TPDB answered HTTP %d", resp.StatusCode)
 	}
 	return json.NewDecoder(io.LimitReader(resp.Body, 16<<20)).Decode(out)
 }
@@ -441,7 +441,7 @@ func cm(h string) int {
 }
 
 func (s tpScene) toScene() Scene {
-	out := Scene{Source: "tpdb", Endpoint: "https://theporndb.net", ID: s.UUID, Title: s.Title, Details: s.Description, Date: s.Date,
+	out := Scene{Source: "tpdb", Endpoint: "tpdb", ID: s.UUID, Title: s.Title, Details: s.Description, Date: s.Date,
 		Duration: s.Duration, Image: s.Image, Tags: []string{}, Performers: []Performer{}, URLs: []string{}}
 	if out.Image == "" {
 		out.Image = s.Poster

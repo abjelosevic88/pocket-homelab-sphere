@@ -36,4 +36,4 @@ Everything is set with environment variables; every one has a default.
 | `DEMO_DATA` | `false` | Seed a made-up library (placeholder videos) |
 | `LOG_LEVEL` / `LOG_FORMAT` | `info` / `text` | Logging |
 
-StashDB / ThePornDB keys, download defaults, the PIN lock and the headset address are personal settings in the app.
+StashDB / TPDB keys, download defaults, the PIN lock and the headset address are personal settings in the app.
