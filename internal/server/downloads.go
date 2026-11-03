@@ -143,6 +143,18 @@ func (s *Server) runDownload(ctx context.Context, id string) {
 			return
 		}
 		if info.IsList() {
+			n := len(info.Entries)
+			switch {
+			case opts.Single:
+				s.failDownload(ctx, d, fmt.Errorf("this page is not one video — it shows %d short clips (usually free previews). The full scene needs your account on that site: add its cookies.txt under Settings → Downloads and try again", n))
+				return
+			case info.Generic() && !opts.AllowList:
+				// not a playlist the site has: ask before fetching every clip on the page
+				msg := fmt.Sprintf("this page is not a playlist but has %d videos on it (often short previews)", n)
+				_ = s.store.UpdateDownload(context.WithoutCancel(ctx), d.ID, store.DownloadPatch{Status: strp("failed"), Error: &msg, Ask: strp("list"), Found: &n,
+					Title: strp(firstNonEmpty(info.Title, d.Title)), Speed: strp(""), ETA: strp("")})
+				return
+			}
 			s.expandPlaylist(ctx, d, info, opts)
 			return
 		}
@@ -171,6 +183,10 @@ func (s *Server) runDownload(ctx context.Context, id string) {
 		own = *opts.OwnFolder
 	}
 	name := "%(title).150B [%(id)s]"
+	if d.ParentID != "" {
+		// videos of one list can share a title and id (clips found on a page): keep each one
+		name += " " + d.ID[:6]
+	}
 	if p := strings.TrimSpace(opts.NamePrefix); p != "" {
 		name = strings.ReplaceAll(p, "%", "%%") + " " + name
 	}
@@ -237,6 +253,14 @@ func (s *Server) runDownload(ctx context.Context, id string) {
 
 func f64p(v float64) *float64 { return &v }
 
+func clockText(sec float64) string {
+	t := int(sec)
+	if t >= 3600 {
+		return fmt.Sprintf("%d:%02d:%02d", t/3600, t/60%60, t%60)
+	}
+	return fmt.Sprintf("%d:%02d", t/60, t%60)
+}
+
 // finishDownload files the downloaded video as a scene.
 func (s *Server) finishDownload(ctx context.Context, d *store.Download, file string, opts store.DownloadOptions) {
 	rel, err := filepath.Rel(s.cfg.LibraryDir, file)
@@ -245,6 +269,20 @@ func (s *Server) finishDownload(ctx context.Context, d *store.Download, file str
 		return
 	}
 	rel = filepath.ToSlash(rel)
+	// a scene of known length that came much shorter is only its preview
+	if opts.ExpectSeconds > 60 {
+		if p, err := s.tools.ProbeFile(ctx, file); err == nil && p.Duration > 0 && p.Duration < float64(opts.ExpectSeconds)*0.5 && p.Duration < float64(opts.ExpectSeconds)-120 {
+			for _, f := range relatedFiles(file) {
+				_ = os.Remove(f)
+			}
+			if dir := filepath.Dir(file); dir != s.cfg.LibraryDir {
+				_ = os.Remove(dir) // only when empty
+			}
+			s.failDownload(ctx, d, fmt.Errorf("only a short preview came (%s of %s) — the full scene needs your account on that site: add its cookies.txt under Settings → Downloads",
+				clockText(p.Duration), clockText(float64(opts.ExpectSeconds))))
+			return
+		}
+	}
 	var size int64
 	if fi, err := os.Stat(file); err == nil {
 		size = fi.Size()
@@ -555,7 +593,14 @@ func (s *Server) handleUpdateDownload(w http.ResponseWriter, r *http.Request) {
 	switch in.Action {
 	case "retry":
 		if d.Status == "failed" || d.Status == "canceled" {
-			_ = s.store.UpdateDownload(ctx, d.ID, store.DownloadPatch{Status: strp("queued"), Error: strp(""), Percent: f64p(0)})
+			_ = s.store.UpdateDownload(ctx, d.ID, store.DownloadPatch{Status: strp("queued"), Error: strp(""), Ask: strp(""), Percent: f64p(0)})
+		}
+	case "all": // every video on the page after all
+		if d.Ask == "list" {
+			o, _ := s.store.DownloadOptionsOf(ctx, d.ID)
+			o.AllowList, o.Single = true, false
+			_ = s.store.SetDownloadOptions(ctx, d.ID, o)
+			_ = s.store.UpdateDownload(ctx, d.ID, store.DownloadPatch{Status: strp("queued"), Error: strp(""), Ask: strp(""), Percent: f64p(0)})
 		}
 	case "start":
 		if d.Status == "paused" {

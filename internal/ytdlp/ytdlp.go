@@ -202,16 +202,23 @@ type Entry struct {
 
 // Info is what a link holds.
 type Info struct {
-	Type      string  `json:"_type"` // video | playlist | url
-	ID        string  `json:"id"`
-	Title     string  `json:"title"`
-	URL       string  `json:"webpage_url"`
-	Thumbnail string  `json:"thumbnail"`
-	Uploader  string  `json:"uploader"`
-	Channel   string  `json:"channel"`
-	Duration  float64 `json:"duration"`
-	Extractor string  `json:"extractor"`
-	Entries   []Entry `json:"entries"`
+	Type         string  `json:"_type"` // video | playlist | url
+	ID           string  `json:"id"`
+	Title        string  `json:"title"`
+	URL          string  `json:"webpage_url"`
+	Thumbnail    string  `json:"thumbnail"`
+	Uploader     string  `json:"uploader"`
+	Channel      string  `json:"channel"`
+	Duration     float64 `json:"duration"`
+	Extractor    string  `json:"extractor"`
+	ExtractorKey string  `json:"extractor_key"`
+	Entries      []Entry `json:"entries"`
+}
+
+// Generic reports whether yt-dlp only found videos embedded in a page
+// (not a site it knows): such "playlists" are often previews or ads.
+func (i *Info) Generic() bool {
+	return strings.EqualFold(i.ExtractorKey, "Generic") || strings.HasPrefix(strings.ToLower(i.Extractor), "generic")
 }
 
 // IsList reports whether the link is a playlist or channel.

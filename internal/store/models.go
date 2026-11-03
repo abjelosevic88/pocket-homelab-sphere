@@ -332,6 +332,12 @@ type DownloadOptions struct {
 	Performers []int64 `json:"performers,omitempty"` // put on the scene once it is in
 	Tags       []int64 `json:"tags,omitempty"`
 	StudioID   int64   `json:"studio_id,omitempty"`
+	// From Discover: one video only (a page of many clips is not it), and the
+	// length the scene should have (a much shorter file is only a preview).
+	Single        bool `json:"single,omitempty"`
+	ExpectSeconds int  `json:"expect_seconds,omitempty"`
+	// A page with many videos (not a playlist): fetch them all after all.
+	AllowList bool `json:"allow_list,omitempty"`
 }
 
 // Download is a video being fetched from a link.
@@ -353,6 +359,8 @@ type Download struct {
 	FilePath       string          `json:"file_path"`
 	SceneID        *int64          `json:"scene_id"`
 	Error          string          `json:"error"`
+	Ask            string          `json:"ask"`   // '' | list (many videos on the page: fetch them all?)
+	Found          int             `json:"found"` // videos on the page
 	CreatedAt      string          `json:"created_at"`
 	UpdatedAt      string          `json:"updated_at"`
 }

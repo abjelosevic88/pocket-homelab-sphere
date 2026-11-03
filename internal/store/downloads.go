@@ -8,14 +8,14 @@ import (
 )
 
 const downloadCols = `id, user_id, parent_id, subscription_id, url, kind, title, thumbnail, options, status, percent, speed, eta,
-	size_bytes, file_path, scene_id, error, created_at, updated_at`
+	size_bytes, file_path, scene_id, error, ask, found, created_at, updated_at`
 
 func scanDownload(row interface{ Scan(...any) error }) (*Download, error) {
 	var d Download
 	var sub, scene sql.NullInt64
 	var opts string
 	if err := row.Scan(&d.ID, &d.UserID, &d.ParentID, &sub, &d.URL, &d.Kind, &d.Title, &d.Thumbnail, &opts, &d.Status, &d.Percent, &d.Speed, &d.ETA,
-		&d.SizeBytes, &d.FilePath, &scene, &d.Error, &d.CreatedAt, &d.UpdatedAt); err != nil {
+		&d.SizeBytes, &d.FilePath, &scene, &d.Error, &d.Ask, &d.Found, &d.CreatedAt, &d.UpdatedAt); err != nil {
 		return nil, notFound(err)
 	}
 	_ = json.Unmarshal([]byte(opts), &d.Options)
@@ -27,6 +27,13 @@ func scanDownload(row interface{ Scan(...any) error }) (*Download, error) {
 		d.SceneID = &scene.Int64
 	}
 	return &d, nil
+}
+
+// SetDownloadOptions replaces a download's options.
+func (s *Store) SetDownloadOptions(ctx context.Context, id string, o DownloadOptions) error {
+	b, _ := json.Marshal(o)
+	_, err := s.DB.ExecContext(ctx, `UPDATE downloads SET options = ? WHERE id = ?`, string(b), id)
+	return err
 }
 
 // DownloadOptionsOf returns a download's options including the password.
@@ -101,17 +108,18 @@ func (s *Store) QueuedDownloads(ctx context.Context) ([]string, error) {
 
 // DownloadPatch changes a download; nil fields stay.
 type DownloadPatch struct {
-	Status, Title, Thumbnail, Speed, ETA, FilePath, Error *string
-	Percent                                               *float64
-	SizeBytes                                             *int64
-	SceneID                                               *int64
+	Status, Title, Thumbnail, Speed, ETA, FilePath, Error, Ask *string
+	Found                                                      *int
+	Percent                                                    *float64
+	SizeBytes                                                  *int64
+	SceneID                                                    *int64
 }
 
 // UpdateDownload applies a patch.
 func (s *Store) UpdateDownload(ctx context.Context, id string, p DownloadPatch) error {
 	set := []string{"updated_at = ?"}
 	args := []any{Now()}
-	for col, v := range map[string]*string{"status": p.Status, "title": p.Title, "thumbnail": p.Thumbnail, "speed": p.Speed, "eta": p.ETA, "file_path": p.FilePath, "error": p.Error} {
+	for col, v := range map[string]*string{"status": p.Status, "title": p.Title, "thumbnail": p.Thumbnail, "speed": p.Speed, "eta": p.ETA, "file_path": p.FilePath, "error": p.Error, "ask": p.Ask} {
 		if v != nil {
 			set = append(set, col+" = ?")
 			args = append(args, *v)
@@ -124,6 +132,10 @@ func (s *Store) UpdateDownload(ctx context.Context, id string, p DownloadPatch) 
 	if p.SizeBytes != nil {
 		set = append(set, "size_bytes = ?")
 		args = append(args, *p.SizeBytes)
+	}
+	if p.Found != nil {
+		set = append(set, "found = ?")
+		args = append(args, *p.Found)
 	}
 	if p.SceneID != nil {
 		set = append(set, "scene_id = ?")

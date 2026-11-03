@@ -27,7 +27,8 @@ export function RemoteCard({ item, onChange, onDismiss }: { item: DiscoverItem; 
   }
   const download = async () => {
     if (!link) return
-    try { await api.post(`${V1}/downloads`, { url: link }); toast('Sent to Downloads') } catch (e) { toast(errMsg(e), 'err') }
+    // exactly this one video: a page of short clips, or a file much shorter than the scene, is not it
+    try { await api.post(`${V1}/downloads`, { url: link, options: { single: true, expect_seconds: Math.round(sc.duration || 0), performers: [], tags: [] } }); toast('Sent to Downloads — the full scene usually needs your cookies for that site') } catch (e) { toast(errMsg(e), 'err') }
   }
   return (
     <div className={`rcard ${item.have_id ? 'have' : ''} ${settings?.discreet ? 'discreet' : ''}`}>
@@ -44,7 +45,7 @@ export function RemoteCard({ item, onChange, onDismiss }: { item: DiscoverItem; 
           {item.have_id > 0
             ? <Link to={`/scenes/${item.have_id}`} className="btn sm"><Icon name="play" size={13} />Watch</Link>
             : <button type="button" className={`btn sm ${item.wanted_id ? 'active' : ''}`} onClick={want} title={item.wanted_id ? 'Take it off the wishlist' : 'Put it on your wishlist'}><Icon name="bookmark" size={13} />{item.wanted_id ? 'Wanted' : 'Want'}</button>}
-          {!item.have_id && link && <button type="button" className="btn sm ghost" onClick={download} title="Try to download it from its page (most studio sites need your cookies — Settings → Downloads)"><Icon name="download" size={13} /></button>}
+          {!item.have_id && link && <button type="button" className="btn sm ghost" onClick={download} title="Try to download this scene from its page (studio sites need your cookies — Settings → Downloads); clips and previews are not kept"><Icon name="download" size={13} /></button>}
           {link && <a className="btn sm ghost" href={link} target="_blank" rel="noreferrer noopener" title="Open its page"><Icon name="external" size={13} /></a>}
           {onDismiss && <button type="button" className="btn sm ghost" onClick={onDismiss} title="Seen it — hide"><Icon name="x" size={13} /></button>}
           <span className="spacer" />

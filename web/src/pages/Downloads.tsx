@@ -212,7 +212,8 @@ function DlRow({ d, act, remove }: { d: Download; act: (d: Download, a: string) 
         {(running || label) && <div className="muted small tnum">{label || `${d.percent.toFixed(0)}%`}{d.speed && ` · ${d.speed}`}{d.eta && ` · ${d.eta} left`}</div>}
         {d.error && d.status !== 'done' && <div className="bad small">{d.error}</div>}
       </div>
-      {d.status === 'failed' && <button type="button" className="btn sm" onClick={() => act(d, 'retry')}><Icon name="refresh" size={14} />Try again</button>}
+      {d.status === 'failed' && d.ask === 'list' && <button type="button" className="btn sm" onClick={() => act(d, 'all')}><Icon name="download" size={14} />Download all {d.found}</button>}
+      {d.status === 'failed' && d.ask !== 'list' && <button type="button" className="btn sm" onClick={() => act(d, 'retry')}><Icon name="refresh" size={14} />Try again</button>}
       {d.status === 'paused' && <button type="button" className="btn sm" onClick={() => act(d, 'start')}><Icon name="play" size={14} />Start</button>}
       {d.status === 'queued' && d.kind === 'video' && <button type="button" className="btn sm ghost" onClick={() => act(d, 'pause')}>Pause</button>}
       {d.scene_id && <Link to={`/scenes/${d.scene_id}`} className="btn sm"><Icon name="play" size={14} />Watch</Link>}
