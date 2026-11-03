@@ -203,14 +203,15 @@ func (s *Server) handleConverted(w http.ResponseWriter, r *http.Request) {
 	if copyVideo {
 		mode = "copy"
 	}
-	// the GPU first when configured; software when it cannot start
-	tries := []bool{false}
+	// the GPU first when configured (decoding there too, then decoding on the
+	// CPU for codecs the GPU cannot read); all on the CPU when neither starts
+	tries := []string{"cpu"}
 	if !copyVideo && s.cfg.HWAccel == "vaapi" {
-		tries = []bool{true, false}
+		tries = []string{"gpu", "upload", "cpu"}
 	}
 	for i, hw := range tries {
 		args := s.convertArgs(sc, start, height, copyVideo, hw)
-		started, err := s.pipeFFmpeg(ctx, w, args, mode, hw)
+		started, err := s.pipeFFmpeg(ctx, w, args, mode, hw != "cpu")
 		if started || ctx.Err() != nil {
 			return
 		}
@@ -219,17 +220,22 @@ func (s *Server) handleConverted(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusInternalServerError, "the video could not be converted: "+err.Error())
 			return
 		}
-		s.log.Info("stream: GPU conversion failed, using the CPU", "scene", sc.ID, "err", err)
+		s.log.Info("stream: conversion did not start, trying the next way", "scene", sc.ID, "way", hw, "err", err)
 	}
 }
 
 func even(n int) int { return n / 2 * 2 }
 
-func (s *Server) convertArgs(sc *store.Scene, start float64, height int, copyVideo, hw bool) []string {
+// convertArgs builds the ffmpeg command; hw is gpu (decode and encode on the
+// GPU), upload (decode on the CPU, encode on the GPU) or cpu.
+func (s *Server) convertArgs(sc *store.Scene, start float64, height int, copyVideo bool, way string) []string {
 	in := s.scenePath(sc)
 	a := []string{"-hide_banner", "-v", "error", "-nostdin"}
-	if hw {
+	switch way {
+	case "gpu":
 		a = append(a, "-hwaccel", "vaapi", "-hwaccel_device", s.cfg.VAAPIDevice, "-hwaccel_output_format", "vaapi")
+	case "upload":
+		a = append(a, "-vaapi_device", s.cfg.VAAPIDevice)
 	}
 	if start > 0 {
 		a = append(a, "-ss", fmt.Sprintf("%.3f", start))
@@ -247,10 +253,13 @@ func (s *Server) convertArgs(sc *store.Scene, start float64, height int, copyVid
 		if sc.VideoCodec == "hevc" {
 			a = append(a, "-tag:v", "hvc1")
 		}
-	case hw:
+	case way == "gpu" || way == "upload":
 		vf := "scale_vaapi=format=nv12"
 		if tw > 0 && th > 0 && th != sc.Height {
 			vf = fmt.Sprintf("scale_vaapi=w=%d:h=%d:format=nv12", tw, th)
+		}
+		if way == "upload" {
+			vf = "format=nv12,hwupload," + vf
 		}
 		a = append(a, "-vf", vf, "-c:v", "h264_vaapi", "-qp", "23", "-g", "120")
 	default:

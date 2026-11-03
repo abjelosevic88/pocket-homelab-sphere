@@ -360,7 +360,7 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
           <span className="ptime tnum">{clock(t)} / {clock(duration)}</span>
           <span className="spacer" />
           {speed !== 1 && <span className="pbadge">{speed}×</span>}
-          {mode === 'converted' && <span className="pbadge" title="The server converts this video while you watch">{quality === 'original' ? 'repackaged' : `${quality}p`}</span>}
+          {mode === 'converted' && <span className="pbadge" title="The server converts this video while you watch">{quality === 'original' ? 'repackaged' : `${scene.height ? Math.min(Number(quality), scene.height) : quality}p`}</span>}
           <button type="button" className="pbtn" onClick={e => setMenu(menu ? null : rectOf(e.currentTarget))} aria-label="Speed and quality" title="Speed and quality"><Icon name="settings" size={17} /></button>
           {scene.is_vr && <button type="button" className={`pbtn vr-mode ${vrMode !== 'flat' ? 'on' : ''}`} onClick={() => setVrMode(m => NEXT_MODE[m])} aria-label={`Now: ${MODE_LABEL[vrMode]}. Switch to: ${MODE_LABEL[NEXT_MODE[vrMode]]}`} title={`${MODE_LABEL[vrMode]} — click for ${MODE_LABEL[NEXT_MODE[vrMode]].toLowerCase()} (v)`}><Icon name="vr" size={19} />{vrMode === 'eye' && <span className="vr-mode-tag">2D</span>}</button>}
           {showVR && xrOK && <button type="button" className="pbtn" onClick={() => vr.current?.enterXR().catch(e => toast((e as Error).message, 'err'))} aria-label="Enter headset" title="Watch in the headset"><Icon name="orbit" size={17} /></button>}
