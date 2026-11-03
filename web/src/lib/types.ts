@@ -83,11 +83,12 @@ export interface DownloadOptions {
   quality?: string; format?: string; folder?: string; name_prefix?: string; clip_start?: string; clip_end?: string; items_limit?: number
   password?: string; auto_start?: boolean; own_folder?: boolean; performers?: number[]; tags?: number[]; studio_id?: number
   single?: boolean; expect_seconds?: number; allow_list?: boolean
+  pick?: string; choices?: { url: string; label: string; score: number }[]
 }
 export interface Download {
   id: string; parent_id: string; subscription_id: number | null; url: string; kind: 'video' | 'playlist' | 'auto'; title: string; thumbnail: string
   options: DownloadOptions; status: 'queued' | 'paused' | 'downloading' | 'processing' | 'done' | 'failed' | 'canceled'
-  percent: number; speed: string; eta: string; size_bytes: number; file_path: string; scene_id: number | null; error: string; ask: '' | 'list'; found: number; created_at: string; updated_at: string
+  percent: number; speed: string; eta: string; size_bytes: number; file_path: string; scene_id: number | null; error: string; ask: '' | 'list' | 'pick'; found: number; created_at: string; updated_at: string
 }
 export interface Subscription {
   id: number; url: string; name: string; options: DownloadOptions; check_minutes: number; title_filter: string; enabled: boolean

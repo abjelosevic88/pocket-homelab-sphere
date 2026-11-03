@@ -127,6 +127,10 @@ func (s *Server) runDownload(ctx context.Context, id string) {
 		return
 	}
 	opts, _ := s.store.DownloadOptionsOf(ctx, id)
+	u, err := s.store.GetUser(ctx, d.UserID)
+	if err != nil {
+		return
+	}
 	st, _ := s.store.GetSettings(ctx, d.UserID)
 	_ = s.store.UpdateDownload(ctx, id, store.DownloadPatch{Status: strp("downloading"), Error: strp(""), Percent: f64p(0)})
 	yo := ytdlp.Options{Password: opts.Password, Limit: opts.ItemsLimit}
@@ -139,10 +143,35 @@ func (s *Server) runDownload(ctx context.Context, id string) {
 			return
 		}
 		if err != nil {
-			s.failDownload(ctx, d, err)
-			return
-		}
-		if info.IsList() {
+			// yt-dlp does not know this site: read the page and look for the
+			// video files on it (member sites link the file on the scene page)
+			if cands, serr := s.scrapeMedia(ctx, u, d.URL); serr == nil && len(cands) > 0 {
+				if len(cands) > 1 && opts.Pick == "" {
+					opts.Choices = cands
+					_ = s.store.SetDownloadOptions(ctx, id, opts)
+					n := len(cands)
+					msg := fmt.Sprintf("%s does not support this site, but found %d video files on the page — choose one", "yt-dlp", n)
+					_ = s.store.UpdateDownload(context.WithoutCancel(ctx), id, store.DownloadPatch{Status: strp("failed"), Error: &msg, Ask: strp("pick"), Found: &n, Speed: strp(""), ETA: strp("")})
+					return
+				}
+				pick := opts.Pick
+				if pick == "" {
+					pick = cands[0].URL
+				}
+				opts.Pick, opts.Referer = pick, d.URL
+				opts.Choices = nil
+				_ = s.store.SetDownloadOptions(ctx, id, opts)
+				info = &ytdlp.Info{Type: "video", URL: pick, Title: d.Title}
+			} else {
+				// nothing yt-dlp or the page gave us
+				if !fileExists(s.cookiesFile(d.UserID)) {
+					s.failDownload(ctx, d, fmt.Errorf("%v. If this is a members' site, add its cookies.txt under Settings → Downloads, or paste the direct download link from the page", err))
+				} else {
+					s.failDownload(ctx, d, fmt.Errorf("%v. Try the direct download link from the page (right-click the file → copy link)", err))
+				}
+				return
+			}
+		} else if info.IsList() {
 			n := len(info.Entries)
 			switch {
 			case opts.Single:
@@ -196,6 +225,10 @@ func (s *Server) runDownload(ctx context.Context, id string) {
 	}
 	quality := firstNonEmpty(opts.Quality, st.DownloadQuality, "best")
 	format := firstNonEmpty(opts.Format, st.DownloadFormat, "auto")
+	jobURL := d.URL
+	if opts.Pick != "" {
+		jobURL = opts.Pick
+	}
 	dir := filepath.Join(s.cfg.LibraryDir, filepath.FromSlash(folder))
 	temp := filepath.Join(s.cfg.LibraryDir, ".downloads", id)
 	if free := diskFree(s.cfg.LibraryDir); free >= 0 && free < 2<<30 {
@@ -204,8 +237,8 @@ func (s *Server) runDownload(ctx context.Context, id string) {
 	}
 	var mu sync.Mutex
 	last := time.Time{}
-	file, err := s.yt.Download(ctx, ytdlp.Job{URL: d.URL, Dir: dir, TempDir: temp, Template: tmpl, Quality: quality, Format: format,
-		ClipStart: opts.ClipStart, ClipEnd: opts.ClipEnd, Options: yo},
+	file, err := s.yt.Download(ctx, ytdlp.Job{URL: jobURL, Dir: dir, TempDir: temp, Template: tmpl, Quality: quality, Format: format,
+		ClipStart: opts.ClipStart, ClipEnd: opts.ClipEnd, Referer: opts.Referer, Options: yo},
 		func(m ytdlp.Meta) {
 			p := store.DownloadPatch{}
 			if m.Title != "" {
@@ -584,13 +617,31 @@ func (s *Server) handleUpdateDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		Action string `json:"action"` // retry | pause | start
+		Action string `json:"action"` // retry | pause | start | all | pick
+		URL    string `json:"url"`    // pick: the chosen file
 	}
 	if err := decode(r, &in); err != nil {
 		writeErr(w, http.StatusBadRequest, "invalid json")
 		return
 	}
 	switch in.Action {
+	case "pick":
+		if d.Ask == "pick" {
+			o, _ := s.store.DownloadOptionsOf(ctx, d.ID)
+			ok := false
+			for _, c := range o.Choices {
+				if c.URL == in.URL {
+					ok = true
+				}
+			}
+			if !ok {
+				writeErr(w, http.StatusBadRequest, "choose one of the files on the page")
+				return
+			}
+			o.Pick = in.URL
+			_ = s.store.SetDownloadOptions(ctx, d.ID, o)
+			_ = s.store.UpdateDownload(ctx, d.ID, store.DownloadPatch{Status: strp("queued"), Error: strp(""), Ask: strp(""), Percent: f64p(0)})
+		}
 	case "retry":
 		if d.Status == "failed" || d.Status == "canceled" {
 			_ = s.store.UpdateDownload(ctx, d.ID, store.DownloadPatch{Status: strp("queued"), Error: strp(""), Ask: strp(""), Percent: f64p(0)})

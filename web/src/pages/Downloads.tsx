@@ -74,7 +74,7 @@ export default function Downloads() {
     setBusy(true)
     try { await api.post(`${V1}/subscriptions`, { url: link, options: opts(), check_minutes: check, title_filter: filter }); setUrl(''); load(); toast('Following — new videos will be fetched as they come') } catch (e) { toast(errMsg(e), 'err') } finally { setBusy(false) }
   }
-  const act = async (d: Download, action: string) => { try { await api.put(`${V1}/downloads/${d.id}`, { action }); load() } catch (e) { toast(errMsg(e), 'err') } }
+  const act = async (d: Download, action: string, extra: Record<string, unknown> = {}) => { try { await api.put(`${V1}/downloads/${d.id}`, { action, ...extra }); load() } catch (e) { toast(errMsg(e), 'err') } }
   const remove = async (d: Download) => { try { await api.del(`${V1}/downloads/${d.id}`); load() } catch (e) { toast(errMsg(e), 'err') } }
 
   const groups = useMemo(() => {
@@ -189,7 +189,7 @@ function FolderInput({ value, folders, onChange }: { value: string; folders: str
   )
 }
 
-function DlSection({ title, icon, items, act, remove, extra }: { title: string; icon: string; items: Download[]; act: (d: Download, a: string) => void; remove: (d: Download) => void; extra?: React.ReactNode }) {
+function DlSection({ title, icon, items, act, remove, extra }: { title: string; icon: string; items: Download[]; act: (d: Download, a: string, extra?: Record<string, unknown>) => void; remove: (d: Download) => void; extra?: React.ReactNode }) {
   if (!items.length) return null
   return (
     <section className="dl-sec">
@@ -199,7 +199,7 @@ function DlSection({ title, icon, items, act, remove, extra }: { title: string; 
   )
 }
 
-function DlRow({ d, act, remove }: { d: Download; act: (d: Download, a: string) => void; remove: (d: Download) => void }) {
+function DlRow({ d, act, remove }: { d: Download; act: (d: Download, a: string, extra?: Record<string, unknown>) => void; remove: (d: Download) => void }) {
   const running = d.status === 'downloading' || d.status === 'processing'
   const label = d.kind === 'auto' && d.status !== 'failed' ? 'Reading the link…' : d.status === 'processing' ? 'Adding to the library…' : d.status === 'paused' ? 'Paused' : d.status === 'queued' ? 'Waiting' : ''
   return (
@@ -213,7 +213,10 @@ function DlRow({ d, act, remove }: { d: Download; act: (d: Download, a: string) 
         {d.error && d.status !== 'done' && <div className="bad small">{d.error}</div>}
       </div>
       {d.status === 'failed' && d.ask === 'list' && <button type="button" className="btn sm" onClick={() => act(d, 'all')}><Icon name="download" size={14} />Download all {d.found}</button>}
-      {d.status === 'failed' && d.ask !== 'list' && <button type="button" className="btn sm" onClick={() => act(d, 'retry')}><Icon name="refresh" size={14} />Try again</button>}
+      {d.status === 'failed' && d.ask === 'pick' && (d.options.choices || []).length > 0 && (
+        <span className="dl-picks">{(d.options.choices || []).slice(0, 6).map(c => <button key={c.url} type="button" className="btn sm" onClick={() => act(d, 'pick', { url: c.url })} title={c.url}><Icon name="download" size={13} />{c.label}</button>)}</span>
+      )}
+      {d.status === 'failed' && d.ask !== 'list' && d.ask !== 'pick' && <button type="button" className="btn sm" onClick={() => act(d, 'retry')}><Icon name="refresh" size={14} />Try again</button>}
       {d.status === 'paused' && <button type="button" className="btn sm" onClick={() => act(d, 'start')}><Icon name="play" size={14} />Start</button>}
       {d.status === 'queued' && d.kind === 'video' && <button type="button" className="btn sm ghost" onClick={() => act(d, 'pause')}>Pause</button>}
       {d.scene_id && <Link to={`/scenes/${d.scene_id}`} className="btn sm"><Icon name="play" size={14} />Watch</Link>}

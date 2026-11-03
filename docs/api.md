@@ -45,7 +45,7 @@ Everything personal (ratings, favourites, O's, plays, saved views, downloads, fo
 |---|---|
 | `POST /downloads` | `{"url": "https://…"}` (or `"urls": […]`), optional `"options": {"quality", "format", "folder", "name_prefix", "clip_start", "clip_end", "items_limit", "password", "auto_start", "own_folder", "performers", "tags", "studio_id"}` |
 | `GET /downloads` | Yours, with progress |
-| `PUT /downloads/{id}` | `{"action": "retry\|pause\|start"}` |
+| `PUT /downloads/{id}` | `{"action": "retry\|pause\|start\|all\|pick"}` (`pick` with `"url"` chooses a file found on an unsupported page; `all` fetches every video of a page that isn't a real playlist) |
 | `DELETE /downloads/{id}` | Cancel / remove |
 | `GET` / `POST` / `PUT` / `DELETE /subscriptions` | Followed channels and playlists (`check_minutes`, `title_filter`, `enabled`, `options`) |
 | `PUT` / `DELETE /downloads/cookies` | Your cookies.txt |

@@ -328,6 +328,7 @@ type Job struct {
 	Format    string // auto | mp4 | mkv | webm
 	ClipStart string
 	ClipEnd   string
+	Referer   string
 	Options
 }
 
@@ -373,6 +374,9 @@ func (j Job) args() []string {
 		a = append(a, "--merge-output-format", "mp4/mkv")
 	}
 	a = append(a, "-S", sort)
+	if j.Referer != "" {
+		a = append(a, "--referer", j.Referer)
+	}
 	if j.ClipStart != "" || j.ClipEnd != "" {
 		start, end := j.ClipStart, j.ClipEnd
 		if start == "" {

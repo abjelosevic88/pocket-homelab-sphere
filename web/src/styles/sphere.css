@@ -499,3 +499,5 @@ a.stat:hover { border-color: var(--border-strong); box-shadow: var(--shadow); te
 .follow-pic img { width: 100%; height: 100%; object-fit: cover; }
 .discreet.rcard img { filter: blur(18px) saturate(.6); }
 .discreet.rcard:hover img { filter: none; }
+
+.dl-picks { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }

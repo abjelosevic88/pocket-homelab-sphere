@@ -338,6 +338,19 @@ type DownloadOptions struct {
 	ExpectSeconds int  `json:"expect_seconds,omitempty"`
 	// A page with many videos (not a playlist): fetch them all after all.
 	AllowList bool `json:"allow_list,omitempty"`
+	// Set by the page scraper when yt-dlp does not support the site: the file
+	// to fetch, the page it was found on (sent as the Referer), and the
+	// choices offered when there were several.
+	Pick    string           `json:"pick,omitempty"`
+	Referer string           `json:"referer,omitempty"`
+	Choices []DownloadChoice `json:"choices,omitempty"`
+}
+
+// DownloadChoice is one video file found on a page that yt-dlp cannot read.
+type DownloadChoice struct {
+	URL   string `json:"url"`
+	Label string `json:"label"`
+	Score int    `json:"score"`
 }
 
 // Download is a video being fetched from a link.
