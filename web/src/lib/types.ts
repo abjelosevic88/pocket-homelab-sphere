@@ -133,7 +133,7 @@ export interface Settings {
   grid_size: 's' | 'm' | 'l'; default_sort: string; hover_preview: boolean; show_missing: boolean
   discreet: boolean; panic_url: string; lock_enabled: boolean; lock_minutes: number; headset_enabled: boolean
   auto_play: boolean; continue_queue: boolean; resume_play: boolean; player_volume: number; stream_quality: string; skip_seconds: number
-  vr_default_mode: 'view' | 'flat'; count_after: number
+  vr_default_mode: 'view' | 'eye' | 'flat'; count_after: number
   download_folder: string; download_quality: string; download_format: string; own_folder: boolean; site_tags: boolean; uploader_studio: boolean; auto_identify: boolean
   stashdb_key: string; stashbox_url: string; tpdb_key: string
   notify_url: string; notify_format: string; notify_configured: boolean; notify_downloads: boolean; notify_quiet: boolean

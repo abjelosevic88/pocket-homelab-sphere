@@ -135,7 +135,7 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	intIn("player_volume", &cur.PlayerVolume, in.PlayerVolume, 0, 100)
 	oneOf("stream_quality", &cur.StreamQuality, in.StreamQuality, "original", "2160", "1440", "1080", "720", "480")
 	intIn("skip_seconds", &cur.SkipSeconds, in.SkipSeconds, 1, 120)
-	oneOf("vr_default_mode", &cur.VRDefaultMode, in.VRDefaultMode, "view", "flat")
+	oneOf("vr_default_mode", &cur.VRDefaultMode, in.VRDefaultMode, "view", "eye", "flat")
 	intIn("count_after", &cur.CountAfter, in.CountAfter, 5, 3600)
 	if keys["download_folder"] {
 		f, err := cleanFolder(in.DownloadFolder)

@@ -592,6 +592,37 @@ func (s *Server) applyNFO(ctx context.Context, sc *store.Scene, n *kodiNFO) {
 	_ = s.store.AddSceneRelations(ctx, sc.ID, perfs, tags)
 }
 
+// recheckShapes works the VR shapes out again from names and frame sizes
+// (when the rules got better); pictures made for a wrong shape are made again.
+func (s *Server) recheckShapes(ctx context.Context) {
+	rows, err := s.store.ShapesToCheck(ctx)
+	if err != nil {
+		return
+	}
+	changed := 0
+	for _, r := range rows {
+		sh := media.DetectShape(r.Path, r.Width, r.Height, "", "")
+		proj, fov := sh.Projection, sh.FOV
+		if proj == "flat" {
+			proj, fov = "", 0
+		}
+		if proj == r.Projection && (proj == "" || (sh.Stereo == r.Stereo && fov == r.FOV)) {
+			continue
+		}
+		_ = s.store.SetVR(ctx, r.ID, proj, sh.Stereo, fov)
+		if r.CoverSource == "frame" {
+			_ = s.store.SetSceneCover(ctx, r.ID, "", "")
+			s.removeFile(r.CoverPath)
+		}
+		_ = s.store.ResetGenerated(ctx, []int64{r.ID})
+		changed++
+	}
+	if changed > 0 {
+		s.log.Info("VR shapes worked out again", "changed", changed)
+		s.wakeWork()
+	}
+}
+
 // ---------- background work ----------
 
 // worker probes new files, makes their pictures and previews and

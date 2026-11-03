@@ -216,7 +216,7 @@ function PlayerTab() {
         <SettingRow title="Converted videos"><Select ariaLabel="Converted quality" value={f.stream_quality} onChange={v => setF({ ...f, stream_quality: v })} options={[{ value: 'original', label: 'As big as the file' }, { value: '2160', label: '2160p' }, { value: '1440', label: '1440p' }, { value: '1080', label: '1080p (good on Wi-Fi)' }, { value: '720', label: '720p (good on mobile data)' }, { value: '480', label: '480p' }]} /></SettingRow>
       </Section>
       <Section title="VR scenes" icon="vr">
-        <SettingRow title="Open VR scenes" help="In the VR view you look around by dragging; the flat view shows the frame as it is."><Segmented size="sm" value={f.vr_default_mode} onChange={v => setF({ ...f, vr_default_mode: v })} options={[{ value: 'view', label: 'In the VR view' }, { value: 'flat', label: 'Flat' }]} /></SettingRow>
+        <SettingRow title="Open VR scenes" help="Look around: drag to turn the view. One eye: one side of the picture, flat, for a normal screen. Whole frame: both sides as the file has them."><Segmented size="sm" value={f.vr_default_mode} onChange={v => setF({ ...f, vr_default_mode: v })} options={[{ value: 'view', label: 'Look around' }, { value: 'eye', label: 'One eye (2D)' }, { value: 'flat', label: 'Whole frame' }]} /></SettingRow>
       </Section>
       <SaveRow save={() => save()} busy={busy} />
     </div>

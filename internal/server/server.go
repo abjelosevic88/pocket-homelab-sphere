@@ -131,6 +131,7 @@ func (s *Server) Bootstrap(ctx context.Context) error {
 		}
 	}
 	_ = s.store.PurgeSessions(ctx)
+	s.recheckShapes(ctx)
 	go s.scanner(ctx)
 	for i := 0; i < s.cfg.GenerateWorkers; i++ {
 		go s.worker(ctx)

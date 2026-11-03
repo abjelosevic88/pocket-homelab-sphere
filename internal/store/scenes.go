@@ -757,3 +757,31 @@ func (s *Store) PHashes(ctx context.Context) (map[int64]string, error) {
 	}
 	return out, rows.Err()
 }
+
+// ShapeRow is what working out a VR shape needs.
+type ShapeRow struct {
+	ID                 int64
+	Path               string
+	Width, Height, FOV int
+	Projection, Stereo string
+	CoverSource        string
+	CoverPath          string
+}
+
+// ShapesToCheck lists probed scenes whose VR shape was not chosen by hand.
+func (s *Store) ShapesToCheck(ctx context.Context) ([]ShapeRow, error) {
+	rows, err := s.DB.QueryContext(ctx, `SELECT id, path, width, height, fov, projection, stereo, cover_source, cover_path FROM scenes WHERE vr_set = 0 AND probed_at != '' AND width > 0`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []ShapeRow
+	for rows.Next() {
+		var r ShapeRow
+		if err := rows.Scan(&r.ID, &r.Path, &r.Width, &r.Height, &r.FOV, &r.Projection, &r.Stereo, &r.CoverSource, &r.CoverPath); err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}

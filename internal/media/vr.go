@@ -92,7 +92,9 @@ func DetectShape(name string, w, h int, spherical, stereo3d string) Shape {
 		switch {
 		case ratio == 0: // size not known yet: side by side is by far the most common
 			sh.Stereo = "sbs"
-		case ratio >= 1.8:
+		case ratio >= 1.8 || (sh.Projection == "equirect180" && ratio >= 1.5):
+			// a 180° picture is as wide as it is tall, so two side by side are
+			// wide; small re-encodes are often squeezed to 16:9
 			sh.Stereo = "sbs"
 			if sh.Projection == "equirect360" && ratio < 2.2 {
 				sh.Stereo = "mono"

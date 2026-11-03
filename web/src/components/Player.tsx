@@ -28,6 +28,10 @@ interface Props {
 }
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
+type VRMode = 'view' | 'eye' | 'flat'
+const NEXT_MODE: Record<VRMode, VRMode> = { view: 'eye', eye: 'flat', flat: 'view' }
+const MODE_LABEL: Record<VRMode, string> = { view: 'Look around (VR)', eye: 'One eye, flat (2D)', flat: 'Whole frame as it is' }
 const QUALITIES = ['original', '2160', '1440', '1080', '720', '480']
 
 function shapeOf(sc: Scene): VRShape {
@@ -54,7 +58,10 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
   const [volume, setVolume] = useState(() => Number(localStorage.getItem('psp-volume') ?? (settings?.player_volume ?? 80) / 100))
   const [muted, setMuted] = useState(false)
   const [speed, setSpeed] = useState(1)
-  const [vrMode, setVrMode] = useState<'view' | 'flat'>(scene.is_vr && settings?.vr_default_mode !== 'flat' ? 'view' : 'flat')
+  // VR scenes: look around in the VR view, one eye as a flat 2D picture, or the whole frame as it is
+  const [vrMode, setVrMode] = useState<VRMode>(scene.is_vr ? ((settings?.vr_default_mode as VRMode) || 'view') : 'flat')
+  const stage = useRef<HTMLDivElement>(null)
+  const [eyeStyle, setEyeStyle] = useState<React.CSSProperties | undefined>()
   const [eye, setEye] = useState<0 | 1>(0)
   const [xrOK, setXrOK] = useState(false)
   const [inXR, setInXR] = useState(false)
@@ -188,6 +195,37 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
   const onPointerUp = () => { const d = drag.current; drag.current = null; if (d && !d.moved) toggle() }
   const onWheel = (e: React.WheelEvent) => { if (vr.current) { vr.current.setZoom(vr.current.zoomDeg + e.deltaY * 0.05) } }
 
+  // ---------- one eye, flat ----------
+  // Shows one side (or half) of the frame filling the player, at the shape a
+  // single eye really has (square for 180°, 2:1 for 360°), so squeezed
+  // re-encodes look right too.
+  const eyeMode = scene.is_vr && vrMode === 'eye'
+  useEffect(() => {
+    if (!eyeMode) { setEyeStyle(undefined); return }
+    const st = stage.current, v = video.current
+    if (!st || !v) return
+    const layout = () => {
+      if (!v.videoWidth) return
+      const sbs = scene.stereo === 'sbs', tb = scene.stereo === 'tb'
+      const natural = (v.videoWidth / (sbs ? 2 : 1)) / (v.videoHeight / (tb ? 2 : 1))
+      const aspect = scene.projection === 'equirect360' ? 2 : scene.projection === 'equirect180' || scene.projection === 'fisheye' ? 1 : natural
+      const SW = st.clientWidth, SH = st.clientHeight
+      const bh = Math.min(SH, SW / aspect), bw = bh * aspect
+      const second = eye === 1
+      setEyeStyle({
+        position: 'absolute', maxWidth: 'none', objectFit: 'fill',
+        width: bw * (sbs ? 2 : 1), height: bh * (tb ? 2 : 1),
+        left: (SW - bw) / 2 - (sbs && second ? bw : 0), top: (SH - bh) / 2 - (tb && second ? bh : 0),
+        clipPath: sbs ? (second ? 'inset(0 0 0 50%)' : 'inset(0 50% 0 0)') : tb ? (second ? 'inset(50% 0 0 0)' : 'inset(0 0 50% 0)') : undefined,
+      })
+    }
+    layout()
+    v.addEventListener('loadedmetadata', layout)
+    const ro = new ResizeObserver(layout)
+    ro.observe(st)
+    return () => { v.removeEventListener('loadedmetadata', layout); ro.disconnect() }
+  }, [eyeMode, eye, src, scene.stereo, scene.projection]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ---------- volume, speed, fullscreen ----------
   useEffect(() => { const v = video.current; if (v) { v.volume = volume; v.muted = muted } localStorage.setItem('psp-volume', String(volume)) }, [volume, muted, src])
   useEffect(() => { if (video.current) video.current.playbackRate = speed }, [speed, src])
@@ -226,7 +264,7 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
         case '[': setSpeed(s => SPEEDS[Math.max(0, SPEEDS.indexOf(s) - 1)]); break
         case ']': setSpeed(s => SPEEDS[Math.min(SPEEDS.length - 1, SPEEDS.indexOf(s) + 1)]); break
         case 'o': onO?.(); break
-        case 'v': if (scene.is_vr) setVrMode(m => m === 'view' ? 'flat' : 'view'); break
+        case 'v': if (scene.is_vr) setVrMode(m => NEXT_MODE[m]); break
         case 'r': vr.current?.reset(); break
         case 'n': if (hasNext) onNext?.(); break
         case 'p': if (hasPrev) onPrev?.(); break
@@ -269,15 +307,16 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
       if (scene.height && Number(q) > scene.height) continue
       items.push({ label: `${q}p (converted)`, checked: mode === 'converted' && quality === q, onSelect: () => switchTo('converted', q) })
     }
-    if (scene.is_vr && scene.stereo !== 'mono') items.push('sep', { heading: 'Eye' }, { label: 'Left', checked: eye === 0, onSelect: () => setEye(0) }, { label: 'Right', checked: eye === 1, onSelect: () => setEye(1) })
+    if (scene.is_vr) items.push('sep', { heading: 'VR' }, ...(['view', 'eye', 'flat'] as VRMode[]).map(m => ({ label: MODE_LABEL[m], checked: vrMode === m, onSelect: () => setVrMode(m) })))
+    if (scene.is_vr && scene.stereo !== 'mono') items.push('sep', { heading: 'Eye' }, { label: scene.stereo === 'tb' ? 'Top' : 'Left', checked: eye === 0, onSelect: () => setEye(0) }, { label: scene.stereo === 'tb' ? 'Bottom' : 'Right', checked: eye === 1, onSelect: () => setEye(1) })
     return items
   }
 
   const showVR = scene.is_vr && vrMode === 'view'
   return (
     <div ref={wrap} className={`player ${full ? 'is-full' : ''} ${idle && playing ? 'is-idle' : ''} ${showVR ? 'is-vr' : ''}`} onPointerMove={wake} onMouseLeave={() => playing && setIdle(true)}>
-      <div className="player-stage">
-        <video ref={video} src={src || undefined} className={showVR ? 'hidden-video' : ''} playsInline preload="metadata" autoPlay={autoPlay}
+      <div ref={stage} className={`player-stage ${eyeMode ? 'is-eye' : ''}`}>
+        <video ref={video} src={src || undefined} className={showVR ? 'hidden-video' : ''} style={eyeStyle} playsInline preload="metadata" autoPlay={autoPlay}
           poster={scene.cover || undefined}
           onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onWaiting={() => setWaiting(true)} onPlaying={() => setWaiting(false)} onCanPlay={() => setWaiting(false)}
           onTimeUpdate={onTimeUpdate} onEnded={() => { setPlaying(false); onEnded?.() }} onError={onError}
@@ -323,7 +362,7 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
           {speed !== 1 && <span className="pbadge">{speed}×</span>}
           {mode === 'converted' && <span className="pbadge" title="The server converts this video while you watch">{quality === 'original' ? 'repackaged' : `${quality}p`}</span>}
           <button type="button" className="pbtn" onClick={e => setMenu(menu ? null : rectOf(e.currentTarget))} aria-label="Speed and quality" title="Speed and quality"><Icon name="settings" size={17} /></button>
-          {scene.is_vr && <button type="button" className={`pbtn ${showVR ? 'on' : ''}`} onClick={() => setVrMode(m => m === 'view' ? 'flat' : 'view')} aria-label={showVR ? 'Show the flat frame' : 'VR view'} title={showVR ? 'Show the frame as it is (v)' : 'VR view (v)'}><Icon name="vr" size={19} /></button>}
+          {scene.is_vr && <button type="button" className={`pbtn vr-mode ${vrMode !== 'flat' ? 'on' : ''}`} onClick={() => setVrMode(m => NEXT_MODE[m])} aria-label={`Now: ${MODE_LABEL[vrMode]}. Switch to: ${MODE_LABEL[NEXT_MODE[vrMode]]}`} title={`${MODE_LABEL[vrMode]} — click for ${MODE_LABEL[NEXT_MODE[vrMode]].toLowerCase()} (v)`}><Icon name="vr" size={19} />{vrMode === 'eye' && <span className="vr-mode-tag">2D</span>}</button>}
           {showVR && xrOK && <button type="button" className="pbtn" onClick={() => vr.current?.enterXR().catch(e => toast((e as Error).message, 'err'))} aria-label="Enter headset" title="Watch in the headset"><Icon name="orbit" size={17} /></button>}
           <button type="button" className="pbtn" onClick={fullscreen} aria-label={full ? 'Leave full screen' : 'Full screen'} title="Full screen (f)"><Icon name={full ? 'minimize' : 'maximize'} size={17} /></button>
         </div>
