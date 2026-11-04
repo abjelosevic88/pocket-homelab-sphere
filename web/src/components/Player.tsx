@@ -66,6 +66,9 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
   const [xrOK, setXrOK] = useState(false)
   const [inXR, setInXR] = useState(false)
   const [full, setFull] = useState(false)
+  // phones without element full screen (iPhone): the player covers the page
+  const [pseudo, setPseudo] = useState(false)
+  const [skipFlash, setSkipFlash] = useState<{ dir: -1 | 1; n: number } | null>(null)
   const [idle, setIdle] = useState(false)
   const [menu, setMenu] = useState<Anchor | null>(null)
   const [hover, setHover] = useState<{ x: number; t: number } | null>(null)
@@ -192,7 +195,7 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
     vr.current.look(-dx * k, dy * k)
     d.x = e.clientX; d.y = e.clientY
   }
-  const onPointerUp = () => { const d = drag.current; drag.current = null; if (d && !d.moved) toggle() }
+  const onPointerUp = (e: React.PointerEvent) => { const d = drag.current; drag.current = null; if (d && !d.moved) { if (e.pointerType === 'mouse') toggle(); else onTap(e) } }
   const onWheel = (e: React.WheelEvent) => { if (vr.current) { vr.current.setZoom(vr.current.zoomDeg + e.deltaY * 0.05) } }
 
   // ---------- one eye, flat ----------
@@ -200,6 +203,7 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
   // single eye really has (square for 180°, 2:1 for 360°), so squeezed
   // re-encodes look right too.
   const eyeMode = scene.is_vr && vrMode === 'eye'
+  const showVR = scene.is_vr && vrMode === 'view'
   useEffect(() => {
     if (!eyeMode) { setEyeStyle(undefined); return }
     const st = stage.current, v = video.current
@@ -229,17 +233,64 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
   // ---------- volume, speed, fullscreen ----------
   useEffect(() => { const v = video.current; if (v) { v.volume = volume; v.muted = muted } localStorage.setItem('psp-volume', String(volume)) }, [volume, muted, src])
   useEffect(() => { if (video.current) video.current.playbackRate = speed }, [speed, src])
+  type WebkitDoc = Document & { webkitFullscreenElement?: Element; webkitFullscreenEnabled?: boolean; webkitExitFullscreen?: () => void }
+  type WebkitEl = HTMLDivElement & { webkitRequestFullscreen?: () => void }
+  type WebkitVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void }
+  const fsElement = () => document.fullscreenElement || (document as WebkitDoc).webkitFullscreenElement
   useEffect(() => {
-    const h = () => setFull(document.fullscreenElement === wrap.current)
+    const h = () => setFull(fsElement() === wrap.current)
     document.addEventListener('fullscreenchange', h)
-    return () => document.removeEventListener('fullscreenchange', h)
+    document.addEventListener('webkitfullscreenchange', h)
+    return () => { document.removeEventListener('fullscreenchange', h); document.removeEventListener('webkitfullscreenchange', h) }
   }, [])
-  const fullscreen = () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else wrap.current?.requestFullscreen?.().catch(() => {}) }
+  useEffect(() => {
+    if (!pseudo) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setPseudo(false) }
+    window.addEventListener('keydown', esc)
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', esc) }
+  }, [pseudo])
+  const fullscreen = () => {
+    const d = document as WebkitDoc, el = wrap.current as WebkitEl | null, v = video.current as WebkitVideo | null
+    if (pseudo) { setPseudo(false); return }
+    if (fsElement()) { if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); else d.webkitExitFullscreen?.(); return }
+    if (el && (document.fullscreenEnabled || d.webkitFullscreenEnabled)) { if (el.requestFullscreen) el.requestFullscreen().catch(() => setPseudo(true)); else el.webkitRequestFullscreen?.(); return }
+    // iPhone: the phone's own full-screen player for the file itself (seeks while playing);
+    // a converted stream or the VR view needs ours, so the player covers the page
+    if (v?.webkitEnterFullscreen && mode === 'direct' && !showVR) { v.webkitEnterFullscreen(); return }
+    setPseudo(true)
+  }
+
+  // touch: a tap shows or hides the controls (never pauses), a double tap on
+  // the left or right side goes back or forward
+  const lastTap = useRef<{ at: number; dir: -1 | 0 | 1 }>({ at: 0, dir: 0 })
+  const flashTimer = useRef(0)
+  const onTap = (e: React.PointerEvent) => {
+    const st = stage.current
+    if (!st) return
+    const r = st.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width
+    const dir: -1 | 0 | 1 = x < 0.35 ? -1 : x > 0.65 ? 1 : 0
+    const now = performance.now()
+    if (dir && lastTap.current.dir === dir && now - lastTap.current.at < 350) {
+      lastTap.current.at = now
+      seek(cur() + dir * (settings?.skip_seconds || 10))
+      setSkipFlash(f => ({ dir, n: f && f.dir === dir ? f.n + 1 : 1 }))
+      window.clearTimeout(flashTimer.current)
+      flashTimer.current = window.setTimeout(() => setSkipFlash(null), 700)
+      wake()
+      return
+    }
+    lastTap.current = { at: now, dir }
+    if (playing && !idle) { window.clearTimeout(idleTimer.current); setIdle(true) } else wake()
+  }
+  const pointerKind = useRef('mouse')
 
   // the controls fade while playing and the pointer rests
   const idleTimer = useRef(0)
   const wake = () => { setIdle(false); window.clearTimeout(idleTimer.current); idleTimer.current = window.setTimeout(() => setIdle(true), 2600) }
-  useEffect(() => () => window.clearTimeout(idleTimer.current), [])
+  useEffect(() => () => { window.clearTimeout(idleTimer.current); window.clearTimeout(flashTimer.current) }, [])
 
   // ---------- keys ----------
   useEffect(() => {
@@ -312,23 +363,26 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
     return items
   }
 
-  const showVR = scene.is_vr && vrMode === 'view'
   return (
-    <div ref={wrap} className={`player ${full ? 'is-full' : ''} ${idle && playing ? 'is-idle' : ''} ${showVR ? 'is-vr' : ''}`} onPointerMove={wake} onMouseLeave={() => playing && setIdle(true)}>
+    <div ref={wrap} className={`player ${full || pseudo ? 'is-full' : ''} ${pseudo ? 'is-pseudo' : ''} ${idle && playing ? 'is-idle' : ''} ${showVR ? 'is-vr' : ''}`}
+      onPointerDownCapture={e => { pointerKind.current = e.pointerType }} onPointerMove={e => e.pointerType === 'mouse' && wake()} onMouseLeave={() => playing && setIdle(true)}
+      onPointerDown={e => { if (e.pointerType !== 'mouse' && e.target === wrap.current) wake() }}>
       <div ref={stage} className={`player-stage ${eyeMode ? 'is-eye' : ''}`}>
         <video ref={video} src={src || undefined} className={showVR ? 'hidden-video' : ''} style={eyeStyle} playsInline preload="metadata" autoPlay={autoPlay}
           poster={scene.cover || undefined}
           onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onWaiting={() => setWaiting(true)} onPlaying={() => setWaiting(false)} onCanPlay={() => setWaiting(false)}
           onTimeUpdate={onTimeUpdate} onEnded={() => { setPlaying(false); onEnded?.() }} onError={onError}
-          onClick={() => !showVR && toggle()} onDoubleClick={() => !showVR && fullscreen()} />
-        {showVR && <canvas ref={canvas} className="player-vr" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onWheel={onWheel} onDoubleClick={fullscreen} />}
+          onClick={() => !showVR && pointerKind.current === 'mouse' && toggle()} onDoubleClick={() => !showVR && pointerKind.current === 'mouse' && fullscreen()}
+          onPointerUp={e => { if (!showVR && e.pointerType !== 'mouse') onTap(e) }} />
+        {showVR && <canvas ref={canvas} className="player-vr" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onWheel={onWheel} onDoubleClick={() => pointerKind.current === 'mouse' && fullscreen()} />}
+        {skipFlash && <div className={`player-skip ${skipFlash.dir < 0 ? 'is-back' : 'is-fwd'}`}><Icon name={skipFlash.dir < 0 ? 'rotate-ccw' : 'rotate-cw'} size={22} /><span>{skipFlash.dir < 0 ? '−' : '+'}{skipFlash.n * (settings?.skip_seconds || 10)} s</span></div>}
         {(!playing && !waiting && !error) && <button type="button" className="player-big" aria-label="Play" onClick={toggle}><Icon name="play" size={34} /></button>}
         {waiting && <div className="player-wait"><span className="spinner" /></div>}
         {error && <div className="player-error"><Icon name="alert" size={18} /><span>{error}</span></div>}
         {playback.missing && <div className="player-error"><Icon name="alert" size={18} /><span>The file is not in the library any more.</span></div>}
         {showVR && !playing && !error && <div className="player-hint">Drag to look around · scroll to zoom</div>}
       </div>
-      <div className="player-controls" onPointerDown={e => e.stopPropagation()}>
+      <div className="player-controls" onPointerDown={e => { e.stopPropagation(); if (e.pointerType !== 'mouse') wake() }} onPointerMove={e => e.pointerType !== 'mouse' && wake()}>
         <div ref={bar} className="player-bar"
           onPointerDown={e => { scrubbing.current = true; (e.target as HTMLElement).setPointerCapture(e.pointerId); setT(timeAt(e.clientX)) }}
           onPointerMove={e => { const at = timeAt(e.clientX); setHover({ x: e.clientX - bar.current!.getBoundingClientRect().left, t: at }); if (scrubbing.current) setT(at) }}
@@ -348,11 +402,11 @@ export const Player = forwardRef<PlayerHandle, Props>(function Player({ detail, 
           )}
         </div>
         <div className="player-row">
-          <button type="button" className="pbtn" onClick={onPrev} disabled={!hasPrev} aria-label="Previous scene" title="Previous (p)"><Icon name="skip-back" size={17} /></button>
+          <button type="button" className="pbtn hide-sm" onClick={onPrev} disabled={!hasPrev} aria-label="Previous scene" title="Previous (p)"><Icon name="skip-back" size={17} /></button>
+          <button type="button" className="pbtn" onClick={() => seek(cur() - (settings?.skip_seconds || 10))} aria-label="Back" title="Back (←)"><Icon name="rotate-ccw" size={17} /></button>
           <button type="button" className="pbtn" onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} title="Play / pause (space)"><Icon name={playing ? 'pause' : 'play'} size={19} /></button>
-          <button type="button" className="pbtn" onClick={onNext} disabled={!hasNext} aria-label="Next scene" title="Next (n)"><Icon name="skip-forward" size={17} /></button>
-          <button type="button" className="pbtn hide-sm" onClick={() => seek(cur() - (settings?.skip_seconds || 10))} aria-label="Back" title="Back (←)"><Icon name="rotate-ccw" size={17} /></button>
-          <button type="button" className="pbtn hide-sm" onClick={() => seek(cur() + (settings?.skip_seconds || 10))} aria-label="Forward" title="Forward (→)"><Icon name="rotate-cw" size={17} /></button>
+          <button type="button" className="pbtn" onClick={() => seek(cur() + (settings?.skip_seconds || 10))} aria-label="Forward" title="Forward (→)"><Icon name="rotate-cw" size={17} /></button>
+          <button type="button" className="pbtn hide-sm" onClick={onNext} disabled={!hasNext} aria-label="Next scene" title="Next (n)"><Icon name="skip-forward" size={17} /></button>
           <span className="pvol hide-sm">
             <button type="button" className="pbtn" onClick={() => setMuted(m => !m)} aria-label={muted ? 'Sound on' : 'Mute'} title="Mute (m)"><Icon name={muted || volume === 0 ? 'volume-x' : 'volume'} size={17} /></button>
             <input type="range" min={0} max={1} step={0.01} value={muted ? 0 : volume} onChange={e => { setVolume(Number(e.target.value)); setMuted(false) }} aria-label="Volume" />

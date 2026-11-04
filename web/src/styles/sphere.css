@@ -314,7 +314,13 @@ a.stat:hover { border-color: var(--border-strong); box-shadow: var(--shadow); te
 .player-hint { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, .55); padding: 5px 12px; border-radius: 14px; font-size: 12.5px; pointer-events: none; }
 .player-controls { position: relative; padding: 0 10px 6px; background: linear-gradient(to top, rgba(0, 0, 0, .85), rgba(0, 0, 0, .55)); transition: opacity .25s; }
 .player.is-full .player-controls, .player.is-vr .player-controls { position: absolute; left: 0; right: 0; bottom: 0; }
-.player.is-idle .player-controls { opacity: 0; }
+.player.is-idle .player-controls { opacity: 0; pointer-events: none; }
+/* phones without element full screen: the player covers the page */
+.player.is-pseudo { position: fixed; inset: 0; z-index: 400; margin: 0; height: 100vh; height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.player-stage { touch-action: manipulation; }
+.player-skip { position: absolute; top: 50%; transform: translateY(-50%); display: grid; justify-items: center; gap: 4px; padding: 14px 18px; border-radius: 50px; background: rgba(0, 0, 0, .5); font-size: 13px; font-weight: 600; pointer-events: none; }
+.player-skip.is-back { left: 8%; }
+.player-skip.is-fwd { right: 8%; }
 .player.is-idle { cursor: none; }
 .player-bar { position: relative; height: 18px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
 .player-track { position: relative; width: 100%; height: 4px; background: rgba(255, 255, 255, .22); border-radius: 2px; transition: height .12s; }
@@ -501,3 +507,9 @@ a.stat:hover { border-color: var(--border-strong); box-shadow: var(--shadow); te
 .discreet.rcard:hover img { filter: none; }
 
 .dl-picks { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* touch: a taller bar to drag with a thumb, the knob always showing */
+@media (hover: none) {
+  .player-bar { height: 28px; }
+  .player-knob { opacity: 1; }
+}
