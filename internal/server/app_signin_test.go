@@ -1,13 +1,17 @@
 package server
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -135,5 +139,64 @@ func TestHLSPlaylist(t *testing.T) {
 	a := hlsArgs([]string{"-i", "x", "-c:a", "copy", "-movflags", "frag", "-f", "mp4", "pipe:1"}, 12)
 	if got := strings.Join(a, " "); !strings.Contains(got, "-c:a aac") || !strings.Contains(got, "-output_ts_offset 12.000") || strings.Contains(got, "movflags") {
 		t.Fatalf("args: %s", got)
+	}
+}
+
+// HEVC tagged hev1 is served as hvc1 (four bytes), whatever range is asked for.
+func TestRelabelHev1(t *testing.T) {
+	// ftyp, then moov/trak/mdia/minf/stbl/stsd with one hev1 entry holding an hvcC with VPS, SPS, PPS
+	box := func(typ string, body ...[]byte) []byte {
+		var b []byte
+		for _, x := range body {
+			b = append(b, x...)
+		}
+		h := make([]byte, 8)
+		binary.BigEndian.PutUint32(h, uint32(8+len(b)))
+		copy(h[4:], typ)
+		return append(h, b...)
+	}
+	hvcc := make([]byte, 22)
+	hvcc = append(hvcc, 3)
+	for _, typ := range []byte{32, 33, 34} {
+		hvcc = append(hvcc, typ, 0, 1, 0, 2, 0xAA, 0xBB)
+	}
+	entry := box("hev1", make([]byte, 78), box("hvcC", hvcc))
+	stsd := box("stsd", []byte{0, 0, 0, 0, 0, 0, 0, 1}, entry)
+	file := append(box("ftyp", []byte("isom")), box("moov", box("trak", box("mdia", box("minf", box("stbl", stsd)))))...)
+	file = append(file, box("mdat", make([]byte, 100))...)
+	p := filepath.Join(t.TempDir(), "v.mp4")
+	if err := os.WriteFile(p, file, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	f, _ := os.Open(p)
+	defer f.Close()
+	fi, _ := f.Stat()
+	offs := hev1Offsets(f, fi)
+	if len(offs) != 1 || string(file[offs[0]:offs[0]+4]) != "hev1" {
+		t.Fatalf("offsets: %v", offs)
+	}
+	r := &relabelled{f: f, patches: offs}
+	// a range that cuts through the label
+	if _, err := r.Seek(offs[0]+2, io.SeekStart); err != nil {
+		t.Fatal(err)
+	}
+	b := make([]byte, 4)
+	if _, err := io.ReadFull(r, b); err != nil || string(b[:2]) != "c1" {
+		t.Fatalf("partial read: %q %v", b, err)
+	}
+	_, _ = r.Seek(0, io.SeekStart)
+	all, _ := io.ReadAll(r)
+	if !bytes.Contains(all, []byte("hvc1")) || bytes.Contains(all, []byte("hev1")) || len(all) != len(file) {
+		t.Fatalf("whole file not relabelled")
+	}
+	// without the parameter sets in the header it stays as it is
+	noSets := bytes.Replace(file, []byte{3, 32, 0, 1}, []byte{0, 32, 0, 1}, 1)
+	p2 := filepath.Join(t.TempDir(), "w.mp4")
+	_ = os.WriteFile(p2, noSets, 0o644)
+	f2, _ := os.Open(p2)
+	defer f2.Close()
+	fi2, _ := f2.Stat()
+	if o := hev1Offsets(f2, fi2); len(o) != 0 {
+		t.Fatalf("relabelled without parameter sets: %v", o)
 	}
 }

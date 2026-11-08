@@ -143,6 +143,12 @@ func (s *Server) serveVideo(w http.ResponseWriter, r *http.Request, sc *store.Sc
 	if attachment {
 		w.Header().Set("Content-Disposition", contentDisposition(filepath.Base(p)))
 	}
+	if !attachment && sc.VideoCodec == "hevc" {
+		if offs := hev1Offsets(f, fi); len(offs) > 0 {
+			http.ServeContent(w, r, "", fi.ModTime(), &relabelled{f: f, patches: offs})
+			return
+		}
+	}
 	http.ServeContent(w, r, "", fi.ModTime(), f)
 }
 
