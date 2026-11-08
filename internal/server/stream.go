@@ -85,6 +85,7 @@ func (s *Server) playback(sc *store.Scene, r *http.Request) map[string]any {
 		"direct_ok":  direct,
 		"mime":       mimeType,
 		"converted":  base + "/stream.mp4",
+		"hls":        base + "/stream.m3u8",
 		"remux_ok":   copyOK,
 		"duration":   sc.Duration,
 		"markers":    base + "/markers",

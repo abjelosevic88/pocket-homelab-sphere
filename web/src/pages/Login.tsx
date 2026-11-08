@@ -12,17 +12,22 @@ export default function Login({ mode }: { mode: 'login' | 'setup' }) {
   const [form, setForm] = useState({ email: '', password: '', name: '' })
   const [err, setErr] = useState(() => new URLSearchParams(window.location.search).get('error') || '')
   const [busy, setBusy] = useState(false)
+  // ?next= is a page of the server itself (the iPhone app's /app-signin), not of this app: go there with a full load
+  const next = new URLSearchParams(window.location.search).get('next') || ''
+  const serverPage = next.startsWith('/app-signin')
+  const from = (loc.state as { from?: string })?.from || (next.startsWith('/') && !next.startsWith('//') ? next : '/')
+  const go = () => { if (serverPage) window.location.assign(from); else navigate(from, { replace: true }) }
 
-  if (status && user) return <Navigate to={(loc.state as { from?: string })?.from || '/'} replace />
+  if (status && user && serverPage) { window.location.replace(from); return null }
+  if (status && user) return <Navigate to={from} replace />
   if (status && mode === 'setup' && !status.needs_setup) return <Navigate to="/login" replace />
   if (status && mode === 'login' && status.needs_setup) return <Navigate to="/setup" replace />
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setBusy(true); setErr('')
-    try { await api.post(`${V1}/auth/${mode}`, form); await refresh(); navigate(from, { replace: true }) } catch (e: unknown) { setErr((e as Error).message) } finally { setBusy(false) }
+    try { await api.post(`${V1}/auth/${mode}`, form); await refresh(); go() } catch (e: unknown) { setErr((e as Error).message) } finally { setBusy(false) }
   }
-  const from = (loc.state as { from?: string })?.from || '/'
   const sso = mode === 'login' && status?.oidc
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }))
 

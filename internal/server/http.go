@@ -31,6 +31,8 @@ func (s *Server) Router() http.Handler {
 	r.Use(middleware.Compress(5))
 
 	r.Get("/pocket-ask.js", s.core.AskWidget("sphere"))
+	r.Get("/app-signin", s.handleAppSignin)
+	r.Post("/app-signin", s.handleAppSigninAllow)
 	r.Get("/healthz", s.handleHealth)
 	r.Get("/readyz", s.handleReady)
 	r.Get("/api/health", s.handleHealth)
@@ -43,6 +45,7 @@ func (s *Server) Router() http.Handler {
 		r.Post("/auth/setup", s.handleSetup)
 		r.Get("/auth/status", s.handleAuthStatus)
 		r.Get("/auth/oidc/start", s.handleOIDCStart)
+		r.Post("/auth/app/exchange", s.handleAppExchange)
 		r.Get("/auth/oidc/callback", s.handleOIDCCallback)
 
 		r.Group(func(r chi.Router) {
@@ -73,6 +76,8 @@ func (s *Server) Router() http.Handler {
 			r.Get("/scenes/{id}/stream", s.handleStream)
 			r.Head("/scenes/{id}/stream", s.handleStream)
 			r.Get("/scenes/{id}/stream.mp4", s.handleConverted)
+			r.Get("/scenes/{id}/stream.m3u8", s.handleHLSPlaylist)
+			r.Get("/scenes/{id}/hls/{seg}", s.handleHLSSegment)
 			r.Get("/scenes/{id}/preview.mp4", s.handlePreview)
 			r.Get("/scenes/{id}/sprite.jpg", s.handleSprite)
 			r.Get("/scenes/{id}/sprite.json", s.handleSpriteMap)
