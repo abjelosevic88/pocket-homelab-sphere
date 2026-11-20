@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abjelosevic88/pocket-homelab-sphere/internal/config"
 	"github.com/abjelosevic88/pocket-homelab-sphere/internal/store"
 )
 
@@ -27,9 +28,14 @@ type harness struct {
 	bc    string
 }
 
-func newHarness(t *testing.T) *harness {
+func newHarness(t *testing.T) *harness { return newHarnessWith(t, nil) }
+
+func newHarnessWith(t *testing.T, tweak func(*config.Config)) *harness {
 	t.Helper()
 	cfg := testConfig(t.TempDir())
+	if tweak != nil {
+		tweak(cfg)
+	}
 	st := openTestStore(t, cfg)
 	s := New(cfg, st, slog.New(slog.NewTextHandler(io.Discard, nil)), nil)
 	ctx := context.Background()

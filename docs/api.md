@@ -30,6 +30,8 @@ Everything personal (ratings, favourites, O's, plays, saved views, downloads, fo
 
 `/performers` (`/lookup?q=`, `/{id}/apply`, `/{id}/merge`, `/{id}/image`), `/studios`, `/tags` (`/{id}/merge`), `/groups`, `/markers` (`?tag=`), `/scenes/{id}/markers`, `/galleries`, `/images/{id}`, `/filters`, `/history`, `/stats?days=`, `/dashboard`, `/home`, `/folders`, `/duplicates?distance=`, `/library` (status), `POST /library/scan`, `POST /library/autotag`, `POST /library/regenerate`.
 
+Your own data: `GET /export.json` (ratings, favourites, plays, where each video was left, saved views, followed channels) and `POST /import` (the same file; adds only what is not here yet). Pocket Move can copy these out and bring them in: `GET /pocket/portable` describes them for `move:export` / `move:import` links.
+
 ## Discover
 
 | | |

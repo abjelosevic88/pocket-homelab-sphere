@@ -124,7 +124,7 @@ func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) importDoc(ctx context.Context, uid int64, doc *exportDoc) (map[string]int, error) {
-	res := map[string]int{"scenes": 0, "plays": 0, "os": 0, "marks": 0, "filters": 0, "subscriptions": 0, "not_found": 0}
+	res := map[string]int{"scenes": 0, "already": 0, "plays": 0, "os": 0, "marks": 0, "filters": 0, "subscriptions": 0, "not_found": 0}
 	for _, e := range doc.Scenes {
 		var id int64
 		if e.OSHash != "" {
@@ -150,10 +150,18 @@ func (s *Server) importDoc(ctx context.Context, uid int64, doc *exportDoc) (map[
 		if e.ResumeSeconds > 0 {
 			p.ResumeSeconds = &e.ResumeSeconds
 		}
-		if err := s.store.PutMine(ctx, uid, id, p); err != nil {
-			return nil, err
+		var rating, fav, hidden int
+		var resume float64
+		_ = s.store.DB.QueryRowContext(ctx, `SELECT rating, favorite, hidden, resume_seconds FROM user_scenes WHERE user_id = ? AND scene_id = ?`, uid, id).Scan(&rating, &fav, &hidden, &resume)
+		if (p.Rating == nil || *p.Rating == rating) && (p.Favorite == nil || fav == 1) && (p.Hidden == nil || hidden == 1) && (p.ResumeSeconds == nil || *p.ResumeSeconds == resume) {
+			// already like this (the same file again)
+			res["already"]++
+		} else {
+			if err := s.store.PutMine(ctx, uid, id, p); err != nil {
+				return nil, err
+			}
+			res["scenes"]++
 		}
-		res["scenes"]++
 		for _, at := range e.Os {
 			var n int
 			_ = s.store.DB.QueryRowContext(ctx, `SELECT COUNT(1) FROM o_events WHERE user_id = ? AND scene_id = ? AND at = ?`, uid, id, at).Scan(&n)
@@ -185,6 +193,10 @@ func (s *Server) importDoc(ctx context.Context, uid int64, doc *exportDoc) (map[
 			res["plays"]++
 		}
 	}
+	mine := map[string]map[int64]store.Mark{}
+	for kind := range markTables {
+		mine[kind], _ = s.store.Marks(ctx, uid, kind)
+	}
 	for _, m := range doc.Marks {
 		table, ok := markTables[m.Kind]
 		if !ok {
@@ -199,6 +211,9 @@ func (s *Server) importDoc(ctx context.Context, uid int64, doc *exportDoc) (map[
 			continue
 		}
 		rating := m.Rating
+		if have, ok := mine[m.Kind][id]; ok && have.Favorite == m.Favorite && have.Rating == m.Rating {
+			continue
+		}
 		if err := s.store.SetMark(ctx, uid, m.Kind, id, boolp(m.Favorite), &rating); err == nil {
 			res["marks"]++
 		}
@@ -218,7 +233,16 @@ func (s *Server) importDoc(ctx context.Context, uid int64, doc *exportDoc) (map[
 			}
 		}
 	}
+	subs, _ := s.store.ListSubscriptions(ctx, uid)
+	followed := map[string]bool{}
+	for _, x := range subs {
+		followed[x.URL] = true
+	}
 	for _, x := range doc.Subscriptions {
+		if followed[x.URL] {
+			continue
+		}
+		followed[x.URL] = true
 		x.ID, x.UserID, x.LastCheckedAt = 0, uid, ""
 		if s.store.SaveSubscription(ctx, &x) == nil {
 			res["subscriptions"]++

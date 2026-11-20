@@ -22,6 +22,18 @@ var linkOffers = []core.Offer{
 	{Scope: "sphere:downloads", Name: "Send links to download", Description: "Add a video link to your downloads (for example from Pocket Clips, Reader or a flow)."},
 }
 
+// portable is what Pocket Move may copy out and bring in for a person
+// (docs/move.md in pocket-homelab-core); Register adds move:export/import.
+// The library itself stays on the box: this is the person's own marks on it.
+var portable = &core.Portable{
+	Exports: []core.PortableExport{
+		{Path: "/api/v1/export.json", File: "sphere.json", Kind: core.KindPocket, Title: "Your ratings, favourites, plays and where you left each video, your saved views and followed channels (the videos stay on the box)"},
+	},
+	Imports: []core.PortableImport{
+		{Path: "/api/v1/import", Kind: core.KindPocket, ContentType: "application/json", Title: "Puts your ratings, favourites and plays on the same videos here (matched by fingerprint or path) and adds your saved views and channels; what is already here is skipped"},
+	},
+}
+
 type linkRoute struct {
 	methods string
 	path    *regexp.Regexp
@@ -40,6 +52,9 @@ var errLinkScope = errors.New("outside the link's scope")
 
 // linkAllows reports whether a link token with these scopes may make this request.
 func linkAllows(scopes []string, r *http.Request) bool {
+	if portable.LinkAllows(scopes, r) {
+		return true
+	}
 	for _, lr := range linkRoutes {
 		if !strings.Contains(" "+lr.methods+" ", " "+r.Method+" ") || !lr.path.MatchString(r.URL.Path) {
 			continue
